@@ -1,7 +1,13 @@
 mod commands;
+mod player;
+
+use std::sync::Mutex;
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let player = player::Player::spawn();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
@@ -12,9 +18,14 @@ pub fn run() {
                         .build(),
                 )?;
             }
+            app.manage(Mutex::new(player));
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![commands::play_track])
+        .invoke_handler(tauri::generate_handler![
+            commands::load_track,
+            commands::play_track,
+            commands::pause_track,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
