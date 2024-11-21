@@ -43,7 +43,7 @@ impl Player {
                         println!("Player: load {}", file_path);
                         let file = std::fs::File::open(file_path).unwrap();
                         sink.append(rodio::Decoder::new(BufReader::new(file)).unwrap());
-                        sink.pause(); // sink would play immediately after there is a track
+                        // sink.pause(); // sink would play immediately after there is a track
                                       // in the queue. We pause it to forbid auto play.
                     }
                     PlayerCommand::Play => {
