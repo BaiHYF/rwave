@@ -26,3 +26,4 @@ tauri-plugin-log = "2.0.0-rc"
 rodio = "0.20.1"
 tauri-plugin-dialog = "2"
 cpal = "0.15.3"
+uuid = { version = "1.11.0", features = ["v4"] }

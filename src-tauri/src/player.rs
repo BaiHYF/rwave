@@ -1,6 +1,10 @@
-use std::io::BufReader;
-use std::sync::mpsc;
+use serde::Serialize;
+use std::collections::HashMap;
+use std::sync::{mpsc, Arc};
 use std::thread::JoinHandle;
+use std::{io::BufReader, sync::Mutex};
+use tauri::{ipc::Channel, AppHandle};
+use uuid::Uuid;
 
 enum PlayerCommand {
     Load(String),
@@ -9,12 +13,20 @@ enum PlayerCommand {
     Terminate,
 }
 
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase", tag = "event", content = "data")]
+pub enum PlayerEvent {
+    Playing,
+    Paused,
+}
+
 pub struct Player {
     /// Holds the sender end of the mpsc channel.
     /// Used by other threads to send commands to the player main thread.
     sender: Option<mpsc::Sender<PlayerCommand>>,
     /// Holds the join handle of the player main thread.
     join_handle: Option<JoinHandle<()>>,
+    subscribers: Arc<Mutex<HashMap<String, Channel<PlayerEvent>>>>,
 }
 
 impl Player {
@@ -26,7 +38,7 @@ impl Player {
         let (sender, receiver) = mpsc::channel::<PlayerCommand>();
         self.sender = Some(sender); // Store the sender in the Player struct
 
-        // Spawn a new thread to handle the player commands (as main player thread), 
+        // Spawn a new thread to handle the player commands (as main player thread),
         // and store its join handle in `self.join_handle`.
         // In this thread, create a rodio::sink to play tracks.
         // Then there is a receive loop, whenever a command is received, operate the rodio::sink.
@@ -40,18 +52,15 @@ impl Player {
                 match receiver.recv().unwrap() {
                     PlayerCommand::Load(file_path) => {
                         // Load the track into the player
-                        println!("Player: load {}", file_path);
                         let file = std::fs::File::open(file_path).unwrap();
                         sink.append(rodio::Decoder::new(BufReader::new(file)).unwrap());
                         // sink.pause(); // sink would play immediately after there is a track
-                                      // in the queue. We pause it to forbid auto play.
+                        // in the queue. We pause it to forbid auto play.
                     }
                     PlayerCommand::Play => {
-                        println!("Player: play, {} song remains in queue", sink.len());
                         sink.play();
                     }
                     PlayerCommand::Pause => {
-                        println!("Player: pause, {} song remains in queue", sink.len());
                         sink.pause();
                     }
                     // When receive terminate, break the loop, release all resources, then the
@@ -96,6 +105,7 @@ impl Player {
         let mut player = Player {
             sender: None,
             join_handle: None,
+            subscribers: Arc::new(Mutex::new(HashMap::new())),
         };
         player.spawn_thread();
 
@@ -120,6 +130,21 @@ impl Player {
     pub fn pause(&self) {
         let sender = self.get_channel();
         sender.send(PlayerCommand::Pause).unwrap();
+    }
+
+    /// Subscribe to player events, return the subscription id
+    pub fn subscribe_event(&mut self, channel: Channel<PlayerEvent>) -> String {
+        let uuid = Uuid::new_v4().to_string();
+        self.subscribers
+            .lock()
+            .unwrap()
+            .insert(uuid.clone(), channel);
+
+        uuid
+    }
+
+    pub fn unsubscribe_event(&mut self, id: String) -> bool {
+        self.subscribers.lock().unwrap().remove(&id).is_some()
     }
 }
 

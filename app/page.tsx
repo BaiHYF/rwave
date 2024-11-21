@@ -1,11 +1,32 @@
 'use client'
 import { Button } from "@/components/ui/button"
 import { Folder, Pause, Play, SkipBack, SkipForward, Square } from "lucide-react";
-import { useCallback } from 'react';
-import { invoke } from '@tauri-apps/api/core'
+import { useCallback, useEffect } from 'react';
+import { invoke, Channel } from '@tauri-apps/api/core'
 import { open } from '@tauri-apps/plugin-dialog';
 import { Slider } from "@/components/ui/slider";
+
+type PlayerEvent = | { event : "playing" } | { event : "paused" };
+
 export default function Home() {
+  // UseEffect: Run the functions whenever this Home() is mounted
+  useEffect(() => {
+    const channel = new Channel<PlayerEvent>();
+
+    channel.onmessage = (message) => {
+      console.log(`got player event ${message.event}`);
+    };
+
+    const subscriptionPromise = invoke('subscribe_player_event', { channel : channel });
+
+    return () => {
+      subscriptionPromise.then((id) => 
+        invoke('unsubscribe_player_event', { id: id })
+      );
+    };
+  }, []);
+
+
   const handleLoad = useCallback(async () => {
     const filepath = await open({
       multiple: false,
