@@ -1,20 +1,38 @@
 'use client'
 import { Button } from "@/components/ui/button"
 import { Folder, Pause, Play, SkipBack, SkipForward, Square } from "lucide-react";
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { invoke, Channel } from '@tauri-apps/api/core'
 import { open } from '@tauri-apps/plugin-dialog';
 import { Slider } from "@/components/ui/slider";
 
-type PlayerEvent = | { event : "playing" } | { event : "paused" };
+type PlayerEvent = | { event : "playing" } | { event : "paused" } | 
+  {
+    event : "positionUpdate", 
+    data : {
+      position : number,
+      duration : number
+    } 
+  };
 
 export default function Home() {
+  const [position, setPosition] = useState(0);
+  const [duration, setDuration] = useState(0);
+  
   // UseEffect: Run the functions whenever this Home() is mounted
   useEffect(() => {
     const channel = new Channel<PlayerEvent>();
 
     channel.onmessage = (message) => {
-      console.log(`got player event ${message.event}`);
+      switch (message.event) {
+        case "positionUpdate":
+          console.log(message.data);
+          setPosition(message.data.position);
+          setDuration(message.data.duration);
+          break;
+        default:
+          console.log(message.event);
+      }
     };
 
     const subscriptionPromise = invoke('subscribe_player_event', { channel : channel });
@@ -51,6 +69,14 @@ export default function Home() {
     await invoke("pause_track");
   }, []);
 
+  const formatSecond = (seconds: number) : String => {
+    const rounded = Math.round(seconds);
+    const m = Math.floor(rounded / 60);
+    const s = rounded % 60;
+
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+
   return (
     <main className='max-w-[400px] w-full shadow-lg p-4 rounded-lg mx-auto'>
       <div className='mb-4 justify-between space-x-2 flex items-center'>
@@ -62,10 +88,10 @@ export default function Home() {
           </Button>
       </div>
       <div className='space-y-2 mb-4' >
-        <Slider defaultValue={[50]} max={100} step={1} className="w-full"/>
+        <Slider value={[Math.round(position)]} max={Math.round(duration)} step={1} className="w-full"/>
         <div className='flex justify-between items-center text-sm text-zinc-600'>
-          <span>01:00</span>
-          <span>03:45</span>
+          <span>{formatSecond(Math.round(position))}</span>
+          <span>{formatSecond(Math.round(duration))}</span>
         </div>
       </div>
 

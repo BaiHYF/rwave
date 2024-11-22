@@ -1,9 +1,11 @@
+use rodio::Source;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::{mpsc, Arc};
 use std::thread::JoinHandle;
+use std::time::Duration;
 use std::{io::BufReader, sync::Mutex};
-use tauri::{ipc::Channel, AppHandle};
+use tauri::ipc::Channel;
 use uuid::Uuid;
 
 enum PlayerCommand {
@@ -18,67 +20,109 @@ enum PlayerCommand {
 pub enum PlayerEvent {
     Playing,
     Paused,
+    #[serde(rename_all = "camelCase")]
+    PositionUpdate {
+        position: u64,
+        duration: u64,
+    },
 }
 
 pub struct Player {
     /// Holds the sender end of the mpsc channel.
-    /// Used by other threads to send commands to the player main thread.
-    sender: Option<mpsc::Sender<PlayerCommand>>,
-    /// Holds the join handle of the player main thread.
-    join_handle: Option<JoinHandle<()>>,
+    /// Used by other threads to send commands to the player playback thread.
+    playback_sender: Option<mpsc::Sender<PlayerCommand>>,
+    /// Holds the join handle of the player playback thread.
+    playback_join_handle: Option<JoinHandle<()>>,
+    event_join_handle: Option<JoinHandle<()>>,
     subscribers: Arc<Mutex<HashMap<String, Channel<PlayerEvent>>>>,
 }
 
 impl Player {
-    /// Spawn a new thread as player main thread to handle player commands and rodio playback.
-    fn spawn_thread(&mut self) {
-        // Create a mpsc channel to hold player commands.
-        // The sender is used by other threads to send commands to the player main thread.
-        // The receiver is held only by the main player thread, receives commands from the public methods
+    /// Spawn a new thread as player playback thread to handle player commands and rodio playback.
+    fn spawn_playback_thread(&mut self, event_sender: mpsc::Sender<PlayerEvent>) {
         let (sender, receiver) = mpsc::channel::<PlayerCommand>();
-        self.sender = Some(sender); // Store the sender in the Player struct
+        self.playback_sender = Some(sender); // Store the sender in the Player struct
 
-        // Spawn a new thread to handle the player commands (as main player thread),
-        // and store its join handle in `self.join_handle`.
-        // In this thread, create a rodio::sink to play tracks.
-        // Then there is a receive loop, whenever a command is received, operate the rodio::sink.
-        // We use the `recv` method of the mpsc::Receiver here, to block the thread when here is nothing
-        // to receive in the channel, which would also let the sink play in the background.
-        self.join_handle = Some(std::thread::spawn(move || {
+        self.playback_join_handle = Some(std::thread::spawn(move || {
             let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
-            let sink = rodio::Sink::try_new(&handle).unwrap();
-            'player_receive_loop: loop {
-                // Will block the current thread if there is no data to receive
+            let sink = Arc::new(rodio::Sink::try_new(&handle).unwrap()); // A rodio::Sink to play the track
+            let event_sender = Arc::new(event_sender);
+            let total_duration = Arc::new(Mutex::new(Duration::from_secs(0)));
+
+            let sink_cln = Arc::clone(&sink);
+            let event_sender_cln = Arc::clone(&event_sender);
+            let total_duration_cln = Arc::clone(&total_duration);
+            std::thread::spawn(move || loop {
+                event_sender_cln
+                    .send(PlayerEvent::PositionUpdate {
+                        position: sink_cln.get_pos().as_secs(),
+                        duration: total_duration_cln.lock().unwrap().as_secs(),
+                    })
+                    .unwrap();
+                std::thread::sleep(std::time::Duration::from_millis(500));
+            });
+
+            'playback_receive_loop: loop {
                 match receiver.recv().unwrap() {
                     PlayerCommand::Load(file_path) => {
-                        // Load the track into the player
                         let file = std::fs::File::open(file_path).unwrap();
-                        sink.append(rodio::Decoder::new(BufReader::new(file)).unwrap());
-                        // sink.pause(); // sink would play immediately after there is a track
-                        // in the queue. We pause it to forbid auto play.
+                        let source = rodio::Decoder::new(BufReader::new(file)).unwrap();
+                        let mut duration_guard = total_duration.lock().unwrap();
+                        *duration_guard = source.total_duration().unwrap();
+                        event_sender.send(PlayerEvent::Playing).unwrap();
+                        sink.append(source);
+                        
+                        // soundtrack.lock().unwrap().load(file_path);
                     }
                     PlayerCommand::Play => {
+                        event_sender.send(PlayerEvent::Playing).unwrap();
+                        // soundtrack.lock().unwrap().play();
                         sink.play();
                     }
                     PlayerCommand::Pause => {
+                        event_sender.send(PlayerEvent::Paused).unwrap();
+                        // soundtrack.lock().unwrap().pause();
                         sink.pause();
                     }
-                    // When receive terminate, break the loop, release all resources, then the
-                    // main player thread would be killed (exit).
                     PlayerCommand::Terminate => {
-                        println!("Player: terminate");
-                        break 'player_receive_loop;
+                        break 'playback_receive_loop;
                     }
                 }
             }
         }));
     }
 
+    fn spawn_event_thread(&mut self, receiver: mpsc::Receiver<PlayerEvent>) {
+        let subscribers = self.subscribers.clone();
+        self.event_join_handle = Some(std::thread::spawn(move || {
+            // 'event_receive_loop:
+            loop {
+                let event = receiver.recv().unwrap();
+                let subscribers_lock = subscribers.lock().unwrap();
+                for subscriber in subscribers_lock.values() {
+                    subscriber.send(event.clone()).unwrap()
+                }
+                drop(subscribers_lock);
+            }
+        }));
+    }
+
+    // fn spawn_pos_sender_thread(&self, soundtrack: Arc<Mutex<Sound>>) {
+    //     std::thread::spawn(move || {
+    //         loop {
+    //             let soundtrack = soundtrack.lock();
+    //             // soundtrack.as_ref().unwrap().send_position_event();
+    //             std::thread::sleep(Duration::from_millis(1000));
+    //             drop(soundtrack);
+    //         }
+    //     });
+    // }
+
     /// Get the sender of the player command channel
     fn get_channel(&self) -> &mpsc::Sender<PlayerCommand> {
-        match self.sender.as_ref() {
+        match self.playback_sender.as_ref() {
             Some(sender) => sender,
-            None => panic!("Player has not been spawned yet!"),
+            None => panic!("Playback thread has not been spawned yet!"),
         }
     }
 
@@ -90,12 +134,12 @@ impl Player {
         let sender = self.get_channel();
         sender.send(PlayerCommand::Terminate).unwrap(); // Send the terminate command to break the receive loop
 
-        if self.join_handle.is_some() {
-            let join_handle = self.join_handle.take().unwrap();
+        if self.playback_join_handle.is_some() {
+            let join_handle = self.playback_join_handle.take().unwrap();
             join_handle.join().unwrap()
         }
 
-        self.sender = None;
+        self.playback_sender = None;
     }
 
     // Public methods(open APIs)
@@ -103,11 +147,17 @@ impl Player {
     /// Player API: Spawn a new player thread, create and return the `Player` object
     pub fn spawn() -> Self {
         let mut player = Player {
-            sender: None,
-            join_handle: None,
+            playback_sender: None,
+            playback_join_handle: None,
+            event_join_handle: None,
             subscribers: Arc::new(Mutex::new(HashMap::new())),
         };
-        player.spawn_thread();
+
+        let (sender, receiver) = mpsc::channel::<PlayerEvent>();
+
+        player.spawn_playback_thread(sender);
+
+        player.spawn_event_thread(receiver);
 
         player
     }
