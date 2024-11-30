@@ -1,11 +1,29 @@
+use id3::{Tag, TagLike};
+use log::kv::Value;
+use reqwest;
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
 use std::sync::Mutex;
 use tauri::{ipc::Channel, State};
+use walkdir::WalkDir;
 
+// use crate::db::Track;
 use crate::player::{Player, PlayerEvent};
+
+// pub fn get_track_metadata(file_path: &str) -> Result<Track, Box<dyn std::error::Error>> {
+//     let tag = Tag::read_from_path(file_path)?;
+//     let title = tag.title().unwrap_or("Unknown Title").to_string();
+
+//     Ok(Track {
+//         id: None,
+//         name: title,
+//         path: file_path.to_string(),
+//     })
+// }
 
 #[tauri::command]
 pub fn load_track(player: State<'_, Mutex<Player>>, file_path: &str) {
-    // dbg!("command::load_track invoked.");
     let player = player.lock().unwrap();
     player.load(file_path);
 }

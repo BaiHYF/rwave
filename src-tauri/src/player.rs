@@ -65,13 +65,14 @@ impl Player {
             'playback_receive_loop: loop {
                 match receiver.recv().unwrap() {
                     PlayerCommand::Load(file_path) => {
+                        sink.clear();
                         let file = std::fs::File::open(file_path).unwrap();
                         let source = rodio::Decoder::new(BufReader::new(file)).unwrap();
                         let mut duration_guard = total_duration.lock().unwrap();
                         *duration_guard = source.total_duration().unwrap();
                         event_sender.send(PlayerEvent::Playing).unwrap();
                         sink.append(source);
-                        
+                        sink.play();
                         // soundtrack.lock().unwrap().load(file_path);
                     }
                     PlayerCommand::Play => {
