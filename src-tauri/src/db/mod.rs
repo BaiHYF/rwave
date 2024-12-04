@@ -5,20 +5,17 @@ use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::thread;
 
+mod constants;
+
+use constants::*;
+
 // Model: Track struct with id, name, path
 #[derive(Serialize, Deserialize)]
 pub struct Track {
-    pub id: Option<i32>,
+    pub track_id: Option<i32>,
     pub name: String,
     pub path: String,
 }
-
-//constants
-const OK_RESPONSE: &str = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n";
-const NOT_FOUND: &str = "HTTP/1.1 404 NOT FOUND\r\n";
-const INTERNAL_SERVER_ERROR: &str = "HTTP/1.1 500 INTERNAL SERVER ERROR\r\n";
-
-const DB_URL: &str = "./db/default.db";
 
 pub fn start() {
     println!("Starting databse: {}", DB_URL);
@@ -58,8 +55,8 @@ fn set_database() -> Result<(), RusqError> {
     // Create table
     // conn.execute("DROP TABLE IF EXISTS tracks", ())?;
     conn.execute(
-        "CREATE TABLE  IF NOT EXISTS tracks (
-            id   INTEGER PRIMARY KEY,
+        "CREATE TABLE IF NOT EXISTS tracks (
+            track_id   INTEGER PRIMARY KEY,
             name TEXT NOT NULL,
             path TEXT NOT NULL
         )",
@@ -77,7 +74,7 @@ fn handle_client(mut stream: TcpStream) {
     match stream.read(&mut buffer) {
         Ok(size) => {
             request.push_str(String::from_utf8_lossy(&buffer[..size]).as_ref());
-            println!("{}", request);
+            // println!("{}", request);
 
             let (status_line, content) = match &*request {
                 r if r.starts_with("POST /tracks") => handle_post_request(r),
@@ -85,36 +82,25 @@ fn handle_client(mut stream: TcpStream) {
                 r if r.starts_with("GET /tracks") => handle_get_all_request(r),
                 r if r.starts_with("PUT /tracks/") => handle_put_request(r),
                 r if r.starts_with("DELETE /tracks/") => handle_delete_request(r),
-                r if r.starts_with("OPTIONS /") => ( OK_RESPONSE.to_string(), "".to_string()), // Handle preflight request
+                r if r.starts_with("OPTIONS /") => (OK_RESPONSE.to_string(), "".to_string()), // Handle preflight request
                 _ => (NOT_FOUND.to_string(), "404 Not Found".to_string()),
             };
-            // println!("====");
-            // dbg!(&status_line);
-            // dbg!(&content);
-            // Add CORS headers
-            let response = format!(
-                "{}Access-Control-Allow-Origin: http://localhost:3000\r\n\
-                 Access-Control-Allow-Methods: GET, POST, PUT, DELETE\r\n\
-                 Access-Control-Allow-Headers: Content-Type\r\n\
-                 Access-Control-Allow-Credentials: true\r\n\
-                 \r\n{}",
-                status_line, content
-            );
-            stream.write_all(response.as_bytes()).unwrap();
-            // stream
-            //     .write_all(format!("{}{}", status_line, content).as_bytes())
-            //     .unwrap();
 
-            // println!("Response sent.");
-            // println!("{}", &response);
+            let response = status_line
+                + ACCESS_CONTROL_ALLOW_ORIGIN
+                + ACCESS_CONTROL_ALLOW_METHODS
+                + ACCESS_CONTROL_ALLOW_HEADERS
+                + ACCESS_CONTROL_ALLOW_CREDENTIALS
+                + EMPTY_LINE
+                + &content;
+
+            stream.write_all(response.as_bytes()).unwrap();
         }
         Err(e) => {
             println!("Error: {}", e);
         }
     }
 }
-
-//CONTROLLERS
 
 //handle_post_request function
 fn handle_post_request(request: &str) -> (String, String) {
@@ -148,9 +134,9 @@ fn handle_get_request(request: &str) -> (String, String) {
     println!("{}", &request);
     match (get_id(&request).parse::<i32>(), Connection::open(DB_URL)) {
         (Ok(id), Ok(conn)) => {
-            match conn.query_row("SELECT * FROM tracks WHERE id = ?", params![id], |row| {
+            match conn.query_row("SELECT * FROM tracks WHERE track_id = ?", params![id], |row| {
                 Ok(Track {
-                    id: row.get(0)?,
+                    track_id: row.get(0)?,
                     name: row.get(1)?,
                     path: row.get(2)?,
                 })
@@ -176,7 +162,7 @@ fn handle_get_all_request(_request: &str) -> (String, String) {
             let rows = stmt
                 .query_map([], |row| {
                     Ok(Track {
-                        id: row.get(0)?,
+                        track_id: row.get(0)?,
                         name: row.get(1)?,
                         path: row.get(2)?,
                     })
@@ -205,7 +191,7 @@ fn handle_put_request(request: &str) -> (String, String) {
     ) {
         (Ok(id), Ok(track), Ok(conn)) => {
             conn.execute(
-                "UPDATE tracks SET name = ?1, path = ?2 WHERE id = ?3",
+                "UPDATE tracks SET name = ?1, path = ?2 WHERE track_id = ?3",
                 params![&track.name, &track.path, &id],
             )
             .unwrap();
@@ -221,7 +207,7 @@ fn handle_delete_request(request: &str) -> (String, String) {
     match (get_id(&request).parse::<i32>(), Connection::open(DB_URL)) {
         (Ok(id), Ok(conn)) => {
             let rows_affected = conn
-                .execute("DELETE FROM tracks WHERE id = $1", &[&id])
+                .execute("DELETE FROM tracks WHERE track_id = $1", &[&id])
                 .unwrap();
 
             if rows_affected == 0 {

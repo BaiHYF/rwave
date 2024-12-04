@@ -1,0 +1,47 @@
+# Design the schema for a database of rwave
+
+## Tables
+
+Artists
+- ArtistID (Primary Key)
+- Name
+
+Albums
+- AlbumID (Primary Key)
+- Title
+- ArtistID (Foreign Key): Reference to the artist.
+
+Tracks
+- TrackID (Primary Key)
+- Name
+- Path
+- ArtistID (Foreign Key): Reference to the artist.
+- AlbumID (Foreign Key): Reference to the album.
+- Duration
+
+Playlists
+- PlaylistID (Primary Key): Unique Identifier for each playlist.
+- Title: Title of the playlist.
+
+
+## Relations
+
+Artist-Album Relationship
+- An artist can have multiple albums (One-to-Many).
+- Each album is associated with an artist through the ArtistID foreign key 
+  in the Album table.
+
+Album-Track Relationship
+- An album can contain multiple tracks (One-to-Many).
+- Each track belongs to an album through the AlbumID foreign key in the Track table.
+
+Artist-Track Relationship
+- An artist can create multiple tracks (One-to-Many).
+- Each track is associated with an artist through the ArtistID foreign key 
+  in the Track table.
+
+Track-Playlist Relationship
+- Each track can be part of multiple playlist and a playlist can 
+  contain multiple tracks which signifies the Many-to-Many relationship.
+- This relationship is realized through a junction table (Track-Playlist) 
+  that stores associations between tracks and playlists.
