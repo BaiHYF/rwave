@@ -1,12 +1,6 @@
-use id3::{Tag, TagLike};
-use log::kv::Value;
-use reqwest;
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
+// use std::path::Path;
 use std::sync::Mutex;
 use tauri::{ipc::Channel, State};
-use walkdir::WalkDir;
 
 // use crate::db::Track;
 use crate::player::{Player, PlayerEvent};
