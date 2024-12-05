@@ -3,12 +3,12 @@
 import React, { createContext, useContext, useState } from 'react';
 
 export interface Track {
-  track_id: number,
-  name: string,
-  path: string,
-  artist_id: number,
-  album_id: number,
-  duration: number,
+  track_id : number,
+  name : string,
+  path : string,
+  artist_id : number,
+  album_id : number,
+  duration : number,
 }
 
 export interface TrackContextType {
@@ -19,7 +19,6 @@ export interface TrackContextType {
 }
 
 const TrackContext = createContext<TrackContextType | undefined>(undefined);
-
 
 interface TrackProviderProps {
   children: React.ReactNode;

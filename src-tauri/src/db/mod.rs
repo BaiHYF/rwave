@@ -5,9 +5,9 @@ use std::net::{TcpListener, TcpStream};
 use std::thread;
 
 mod constants;
+pub mod dbcommands;
 mod entities;
 mod utils;
-pub mod dbcommands;
 
 use constants::*;
 use entities::*;

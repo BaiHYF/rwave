@@ -10,21 +10,20 @@ import TrackList from "@/components/tracklist";
 import { db_url } from "@/components/tracklist";
 import axios from "axios";
 import { useTrack } from "@/components/trackcontext";
-// import { TrackProvider } from "@/components/trackcontext";
 
-type PlayerEvent = | { event : "playing" } | { event : "paused" } | 
-  {
-    event : "positionUpdate", 
-    data : {
-      position : number,
-      duration : number
-    } 
-  };
+type PlayerEvent = | { event: "playing" } | { event: "paused" } |
+{
+  event: "positionUpdate",
+  data: {
+    position: number,
+    duration: number
+  }
+};
 
 export default function Home() {
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
-  
+
   const { currentTrack, setCurrentTrack, tracks, setTracks } = useTrack();
 
 
@@ -44,10 +43,10 @@ export default function Home() {
       }
     };
 
-    const subscriptionPromise = invoke('subscribe_player_event', { channel : channel });
+    const subscriptionPromise = invoke('subscribe_player_event', { channel: channel });
 
     return () => {
-      subscriptionPromise.then((id) => 
+      subscriptionPromise.then((id) =>
         invoke('unsubscribe_player_event', { id: id })
       );
     };
@@ -80,7 +79,7 @@ export default function Home() {
       }
     }
 
-    
+
   }, []);
 
   const handlePlay = useCallback(async () => {
@@ -102,7 +101,7 @@ export default function Home() {
       if (nextTrack) {
         setCurrentTrack(nextTrack);
         const nextpath = nextTrack.path;
-        await invoke('load_track', {  filePath : nextpath }); 
+        await invoke('load_track', { filePath: nextpath });
       }
     }
   }, [currentTrack, tracks, setCurrentTrack, invoke]);
@@ -118,12 +117,12 @@ export default function Home() {
       if (lastTrack) {
         setCurrentTrack(lastTrack);
         const nextpath = lastTrack.path;
-        await invoke('load_track', {  filePath : nextpath }); 
+        await invoke('load_track', { filePath: nextpath });
       }
     }
   }, [currentTrack, tracks, setCurrentTrack, invoke]);
 
-  const formatSecond = (seconds: number) : String => {
+  const formatSecond = (seconds: number): String => {
     const rounded = Math.round(seconds);
     const m = Math.floor(rounded / 60);
     const s = rounded % 60;
@@ -135,52 +134,52 @@ export default function Home() {
     <main>
       <div className='flex flex-col'>
 
-      {/* Track List and Player Container */}
-      <div className='flex max-w-[900px]'>
+        {/* Track List and Player Container */}
+        <div className='flex max-w-[900px]'>
 
-      {/* Player */}
-      <div className='max-w-[400px] w-full shadow-lg p-4 rounded-lg mx-auto'>
-        <div className='mb-4 justify-between space-x-2 flex items-center'>
-          <div className='text-lg font-semibold text-zinc-1000 overflow-hidden whitespace-nowrap'>
-            {currentTrack ? currentTrack.name : 'No Track Selected'}
+          {/* Player */}
+          <div className='max-w-[400px] w-full shadow-lg p-4 rounded-lg mx-auto'>
+            <div className='mb-4 justify-between space-x-2 flex items-center'>
+              <div className='text-lg font-semibold text-zinc-1000 overflow-hidden whitespace-nowrap'>
+                {currentTrack ? currentTrack.name : 'No Track Selected'}
+              </div>
+              <Button variant="outline" size="icon" onClick={handleLoad}>
+                <Folder className='w-10 h-10' />
+              </Button>
+            </div>
+            <div className='space-y-2 mb-4' >
+              <Slider value={[Math.round(position)]} max={Math.round(duration)} step={1} className="w-full" />
+              <div className='flex justify-between items-center text-sm text-zinc-600'>
+                <span>{formatSecond(Math.round(position))}</span>
+                <span>{formatSecond(Math.round(duration))}</span>
+              </div>
+            </div>
+
+            <div className='flex justify-center items-center space-x-2'>
+              <Button variant="outline" size="icon" onClick={handleLast}>
+                <SkipBack className='w-10 h-10' />
+              </Button>
+              <Button variant="outline" size="icon" onClick={handlePlay}>
+                <Play className='w-10 h-10' />
+              </Button>
+              <Button variant="outline" size="icon" onClick={handlePause}>
+                <Pause className='w-10 h-10' />
+              </Button>
+              <Button variant="outline" size="icon">
+                <Square className='w-10 h-10' />
+              </Button>
+              <Button variant="outline" size="icon" onClick={handleNext}>
+                <SkipForward className='w-10 h-10' />
+              </Button>
+            </div>
           </div>
-            <Button variant="outline" size="icon" onClick={handleLoad}>
-              <Folder className='w-10 h-10'/>
-            </Button>
-        </div>
-        <div className='space-y-2 mb-4' >
-          <Slider value={[Math.round(position)]} max={Math.round(duration)} step={1} className="w-full"/>
-          <div className='flex justify-between items-center text-sm text-zinc-600'>
-            <span>{formatSecond(Math.round(position))}</span>
-            <span>{formatSecond(Math.round(duration))}</span>
+
+          {/* Track List */}
+          <div className='max-w-[300px] w-full mx-auto mt-4'>
+            {/* <div className='max-w-[300px] w-full p-4 mx-auto shadow-lg rounded-lg'> */}
+            <TrackList />
           </div>
         </div>
-
-        <div className='flex justify-center items-center space-x-2'>
-          <Button variant="outline" size="icon" onClick={handleLast}>
-            <SkipBack className='w-10 h-10' />
-          </Button>
-          <Button variant="outline" size="icon" onClick={handlePlay}>
-            <Play className='w-10 h-10'/>
-          </Button>
-          <Button variant="outline" size="icon" onClick={handlePause}>
-            <Pause className='w-10 h-10'/>
-          </Button>
-          <Button variant="outline" size="icon">
-            <Square className='w-10 h-10'/>
-          </Button>
-          <Button variant="outline" size="icon" onClick={handleNext}>
-            <SkipForward className='w-10 h-10'/>
-          </Button>
-        </div>
-      </div>
-
-      {/* Track List */}
-      <div className='max-w-[300px] w-full mx-auto mt-4'>
-      {/* <div className='max-w-[300px] w-full p-4 mx-auto shadow-lg rounded-lg'> */}
-        <TrackList />
-      </div>
-      </div>
       </div>
     </main>
   )

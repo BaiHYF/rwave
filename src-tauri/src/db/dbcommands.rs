@@ -1,6 +1,6 @@
 use super::constants::*;
 use super::entities::Track;
-use rusqlite::Error as RusqError;
+// use rusqlite::Error as RusqError;
 use rusqlite::{params, Connection, Result};
 
 #[tauri::command(rename_all = "snake_case")]
@@ -142,4 +142,26 @@ pub fn get_tracks_from_playlist(playlist_id: i32) -> Vec<Track> {
     }
 
     tracks
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub fn rename_playlist(playlist_id: i32, new_name: String) -> Result<(), String> {
+    let conn = Connection::open(DB_URL).map_err(|e| e.to_string())?;
+
+    let playlist_exists: Result<i32, _> = conn.query_row(
+        "SELECT PlaylistID FROM Playlists WHERE PlaylistID = ?",
+        params![playlist_id],
+        |row| row.get(0),
+    );
+    if playlist_exists.is_err() {
+        return Err("Playlist not found".into());
+    }
+
+    conn.execute(
+        "UPDATE Playlists SET Name = ? WHERE PlaylistID = ?",
+        params![new_name, playlist_id],
+    )
+    .map_err(|e| e.to_string())?;
+
+    Ok(())
 }
