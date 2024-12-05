@@ -20,7 +20,6 @@ export interface TrackContextType {
 
 const TrackContext = createContext<TrackContextType | undefined>(undefined);
 
-
 interface TrackProviderProps {
   children: React.ReactNode;
 }

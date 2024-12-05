@@ -1,5 +1,4 @@
-import React, {useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
 import { invoke, Channel } from '@tauri-apps/api/core'
 import {
     Select,
@@ -12,7 +11,7 @@ import {
     SelectScrollUpButton,
     SelectScrollDownButton,
 } from "@/components/ui/select"
-import { useTrack, Track } from "@/components/trackcontext";
+import { useTrack, Track } from "@/components/context/trackcontext";
 
 export const db_url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7744';
 
@@ -23,11 +22,11 @@ const TrackList = () => {
     useEffect(() => {
         const fetchAllTrack = async () => {
             try {
-                invoke('get_tracks_from_playlist', {playlist_id: 1})
-                .then((data) => {
-                    const tracksData = data as Track[];
-                    setTracks(tracksData);
-                });
+                invoke('get_tracks_from_playlist', { playlist_id: 1 })
+                    .then((data) => {
+                        const tracksData = data as Track[];
+                        setTracks(tracksData);
+                    });
             } catch (error) {
                 console.error('Error fetching data: ', error);
             }
@@ -52,10 +51,10 @@ const TrackList = () => {
         if (selectedTrack) {
             setCurrentTrack(selectedTrack);
             const filepath = selectedTrack.path;
-              if (filepath !== null) {
+            if (filepath !== null) {
                 // Arguments should be passed as a JSON object with CAMELCASE keys !!!!!
-                await invoke('load_track', {  filePath : filepath }); 
-              }
+                await invoke('load_track', { filePath: filepath });
+            }
         }
 
     };
@@ -71,7 +70,7 @@ const TrackList = () => {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectScrollUpButton />
-                        <SelectGroup key= "group">
+                        <SelectGroup key="group">
                             <SelectLabel>Default Playlist</SelectLabel>
                             {tracks.map((track) => (
                                 <SelectItem key={track.track_id} value={track.name}>
@@ -82,7 +81,7 @@ const TrackList = () => {
                         <SelectScrollDownButton />
                     </SelectContent>
                 </Select>
-            )}  
+            )}
         </div>
     );
 }

@@ -6,10 +6,10 @@ import { invoke, Channel } from '@tauri-apps/api/core'
 import { open } from '@tauri-apps/plugin-dialog';
 import { readDir, BaseDirectory } from '@tauri-apps/plugin-fs';
 import { Slider } from "@/components/ui/slider";
-import TrackList from "@/components/tracklist";
-import { db_url } from "@/components/tracklist";
+import TrackList from "@/components/ui/tracklist";
+import { db_url } from "@/components/ui/tracklist";
 import axios from "axios";
-import { useTrack } from "@/components/trackcontext";
+import { useTrack } from "@/components/context/trackcontext";
 
 type PlayerEvent = | { event: "playing" } | { event: "paused" } |
 {
@@ -26,8 +26,6 @@ export default function Home() {
 
   const { currentTrack, setCurrentTrack, tracks, setTracks } = useTrack();
 
-
-  // UseEffect: Run the functions whenever this Home() is mounted
   useEffect(() => {
     const channel = new Channel<PlayerEvent>();
 

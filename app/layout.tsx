@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 // import Greet from './play'
-import { TrackProvider } from "@/components/trackcontext";
+import { TrackProvider } from "@/components/context/trackcontext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -31,7 +31,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <TrackProvider>
-        {children}
+          {children}
         </TrackProvider>
       </body>
     </html>
