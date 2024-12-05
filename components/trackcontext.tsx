@@ -3,9 +3,12 @@
 import React, { createContext, useContext, useState } from 'react';
 
 export interface Track {
-  id: string;
-  name: string;
-  path: string;
+  track_id : number,
+  name : string,
+  path : string,
+  artist_id : number,
+  album_id : number,
+  duration : number,
 }
 
 export interface TrackContextType {

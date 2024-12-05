@@ -12,18 +12,7 @@ import {
     SelectScrollUpButton,
     SelectScrollDownButton,
 } from "@/components/ui/select"
-import { useTrack } from "@/components/trackcontext";
-
-
-export interface Track {
-    track_id : number,
-    name : string,
-    path : string,
-    artist_id : number,
-    album_id : number,
-    duration : number,
-}
-
+import { useTrack, Track } from "@/components/trackcontext";
 
 export const db_url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7744';
 
@@ -34,9 +23,11 @@ const TrackList = () => {
     useEffect(() => {
         const fetchAllTrack = async () => {
             try {
-                const response = await axios.get(`${db_url}/tracks`);
-                console.log('All tracks:', response.data);
-                setTracks(response.data);
+                invoke('get_tracks_from_playlist', {playlist_id: 1})
+                .then((data) => {
+                    const tracksData = data as Track[];
+                    setTracks(tracksData);
+                });
             } catch (error) {
                 console.error('Error fetching data: ', error);
             }
@@ -83,7 +74,7 @@ const TrackList = () => {
                         <SelectGroup key= "group">
                             <SelectLabel>Default Playlist</SelectLabel>
                             {tracks.map((track) => (
-                                <SelectItem key={track.id} value={track.name}>
+                                <SelectItem key={track.track_id} value={track.name}>
                                     {track.name}
                                 </SelectItem>
                             ))}

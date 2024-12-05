@@ -1,5 +1,5 @@
 use id3::{Tag, TagLike};
-use rodio::{source::Source, Decoder, OutputStream};
+use rodio::{source::Source, Decoder};
 use std::fs::File;
 use std::io::BufReader;
 

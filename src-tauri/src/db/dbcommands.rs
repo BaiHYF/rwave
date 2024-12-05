@@ -1,6 +1,5 @@
-use std::fs::exists;
-
 use super::constants::*;
+use super::entities::Track;
 use rusqlite::Error as RusqError;
 use rusqlite::{params, Connection, Result};
 
@@ -111,8 +110,36 @@ pub fn remove_track_from_playlist(playlist_id: i32, track_id: i32) -> Result<(),
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub fn get_tracks_from_playlist(playlist_id: i32) {
-    // let conn = Connection::open(DB_URL).map_err(|e| e.to_string())?;
+pub fn get_tracks_from_playlist(playlist_id: i32) -> Vec<Track> {
+    let conn = Connection::open(DB_URL).unwrap();
 
-    unimplemented!()
+    let mut tracks = Vec::new();
+
+    let mut stmt = conn
+        .prepare(
+            "
+            SELECT * FROM Tracks JOIN TrackPlaylist 
+            ON Tracks.TrackID = TrackPlaylist.TrackID
+            WHERE TrackPlaylist.PlaylistID = ? ",
+        )
+        .unwrap();
+
+    let rows = stmt
+        .query_map(params![playlist_id], |row| {
+            Ok(Track {
+                track_id: row.get(0)?,
+                name: row.get(1)?,
+                path: row.get(2)?,
+                artist_id: row.get(3)?,
+                album_id: row.get(4)?,
+                duration: row.get(5)?,
+            })
+        })
+        .unwrap();
+
+    for row in rows {
+        tracks.push(row.unwrap());
+    }
+
+    tracks
 }
