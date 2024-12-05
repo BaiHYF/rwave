@@ -67,7 +67,7 @@ fn set_database() -> Result<(), RusqError> {
             Path TEXT NOT NULL,
             ArtistID INTEGER NOT NULL,
             AlbumID INTEGER NOT NULL,
-            Duration INTEGER,
+            Duration INTEGER DEFAULT 0,
             FOREIGN KEY(ArtistID) REFERENCES Artists(ArtistID),
             FOREIGN KEY(AlbumID) REFERENCES Albums(AlbumID)
         );
@@ -132,7 +132,7 @@ fn handle_post_request(request: &str) -> (String, String) {
     match (get_user_request_body(&request), Connection::open(DB_URL)) {
         (Ok(track), Ok(mut conn)) => {
             // Parse the MP3 tags
-            let (title, artist, album) = parse_mp3_tags(&track.path).unwrap_or((None, None, None));
+            let (title, artist, album, duration) = parse_mp3_tags(&track.path).unwrap_or((None, None, None, None));
 
             let track_name = match title {
                 Some(t) => t,
@@ -147,6 +147,11 @@ fn handle_post_request(request: &str) -> (String, String) {
                 None => "Unknown Album".to_string(),
             };
 
+            let track_duration = match duration {
+                Some(d) => d,
+                None => 0,
+            };
+
             // Begin a transaction, for this series of operations
             let tx = conn.transaction().unwrap();
         
@@ -154,12 +159,12 @@ fn handle_post_request(request: &str) -> (String, String) {
             // Get the `artist_id` if it exists,
             // Otherwise, insert a new artist item and return the new inserted item's `artist_id`  
             let artist_id = tx.query_row(
-                "SELECT artist_id FROM Artists WHERE name = ?",
+                "SELECT ArtistID FROM Artists WHERE Name = ?",
                 params![&artist_name],
                 |row| row.get(0),
             ).unwrap_or_else(|_| {
                 tx.execute(
-                    "INSERT INTO Artists (name) VALUES (?)",
+                    "INSERT INTO Artists (Name) VALUES (?)",
                     params![&artist_name],
                 ).unwrap();
                 tx.last_insert_rowid()
@@ -167,12 +172,12 @@ fn handle_post_request(request: &str) -> (String, String) {
 
             // Same solution for `album_id`
             let album_id = tx.query_row(
-                "SELECT album_id FROM Albums WHERE name = ? AND artist_id = ?",
+                "SELECT AlbumID FROM Albums WHERE Name = ? AND ArtistID = ?",
                 params![&album_name, artist_id],
                 |row| row.get(0),
             ).unwrap_or_else(|_| {
                 tx.execute(
-                    "INSERT INTO Albums (name, artist_id) VALUES (?, ?)",
+                    "INSERT INTO Albums (Name, ArtistID) VALUES (?, ?)",
                     params![&album_name, artist_id],
                 ).unwrap();
                 tx.last_insert_rowid()
@@ -180,8 +185,8 @@ fn handle_post_request(request: &str) -> (String, String) {
 
             // Insert the track into the `Tracks` table
             match tx.execute(
-                "INSERT INTO Tracks (name, path, artist_id, album_id) VALUES (?1, ?2, ?3, ?4)",
-                params![&track_name, &track.path, artist_id, album_id],
+                "INSERT INTO Tracks (Name, Path, ArtistID, AlbumID, Duration) VALUES (?1, ?2, ?3, ?4, ?5)",
+                params![&track_name, &track.path, artist_id, album_id, track_duration],
             ) {
                 Ok(_) => {
                     tx.commit().unwrap();
@@ -209,13 +214,14 @@ fn handle_get_request(request: &str) -> (String, String) {
     println!("{}", &request);
     match (get_id(&request).parse::<i32>(), Connection::open(DB_URL)) {
         (Ok(id), Ok(conn)) => {
-            match conn.query_row("SELECT * FROM tracks WHERE track_id = ?", params![id], |row| {
+            match conn.query_row("SELECT * FROM Tracks WHERE TrackID = ?", params![id], |row| {
                 Ok(Track {
                     track_id: row.get(0)?,
                     name: row.get(1)?,
                     path: row.get(2)?,
                     artist_id: row.get(3)?,
                     album_id: row.get(4)?,
+                    duration: row.get(5)?,
                 })
             }) {
                 Ok(track) => (
@@ -235,7 +241,7 @@ fn handle_get_all_request(_request: &str) -> (String, String) {
         Ok(conn) => {
             let mut tracks = Vec::new();
 
-            let mut stmt = conn.prepare("SELECT * FROM tracks").unwrap();
+            let mut stmt = conn.prepare("SELECT * FROM Tracks").unwrap();
             let rows = stmt
                 .query_map([], |row| {
                     Ok(Track {
@@ -244,6 +250,7 @@ fn handle_get_all_request(_request: &str) -> (String, String) {
                         path: row.get(2)?,
                         artist_id: row.get(3)?,
                         album_id: row.get(4)?,
+                        duration: row.get(5)?,
                     })
                 })
                 .unwrap();
@@ -270,7 +277,7 @@ fn handle_put_request(request: &str) -> (String, String) {
     ) {
         (Ok(id), Ok(track), Ok(conn)) => {
             conn.execute(
-                "UPDATE tracks SET name = ?1, path = ?2 WHERE track_id = ?3",
+                "UPDATE Tracks SET Name = ?1, Path = ?2 WHERE TrackID = ?3",
                 params![&track.name, &track.path, &id],
             )
             .unwrap();
@@ -286,7 +293,7 @@ fn handle_delete_request(request: &str) -> (String, String) {
     match (get_id(&request).parse::<i32>(), Connection::open(DB_URL)) {
         (Ok(id), Ok(conn)) => {
             let rows_affected = conn
-                .execute("DELETE FROM tracks WHERE track_id = $1", &[&id])
+                .execute("DELETE FROM Tracks WHERE TrackID = $1", &[&id])
                 .unwrap();
 
             if rows_affected == 0 {

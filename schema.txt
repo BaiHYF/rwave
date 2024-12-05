@@ -8,7 +8,7 @@ Artists
 
 Albums
 - AlbumID (Primary Key)
-- Title
+- Name
 - ArtistID (Foreign Key): Reference to the artist.
 
 Tracks
@@ -21,7 +21,7 @@ Tracks
 
 Playlists
 - PlaylistID (Primary Key): Unique Identifier for each playlist.
-- Title: Title of the playlist.
+- Name: Title of the playlist.
 
 
 ## Relations

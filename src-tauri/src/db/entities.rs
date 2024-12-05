@@ -15,6 +15,7 @@ pub struct Track {
     pub path: String,
     pub artist_id: Option<i32>,
     pub album_id: Option<i32>,
+    pub duration: Option<i32>,
 }
 
 /// Artists
