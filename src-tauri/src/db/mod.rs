@@ -132,7 +132,8 @@ fn handle_post_request(request: &str) -> (String, String) {
     match (get_user_request_body(&request), Connection::open(DB_URL)) {
         (Ok(track), Ok(mut conn)) => {
             // Parse the MP3 tags
-            let (title, artist, album, duration) = parse_mp3_tags(&track.path).unwrap_or((None, None, None, None));
+            let (title, artist, album, duration) =
+                parse_mp3_tags(&track.path).unwrap_or((None, None, None, None));
 
             let track_name = match title {
                 Some(t) => t,
@@ -154,34 +155,40 @@ fn handle_post_request(request: &str) -> (String, String) {
 
             // Begin a transaction, for this series of operations
             let tx = conn.transaction().unwrap();
-        
+
             // Search for the artist with name = `artist_name` in table `Artists`,
             // Get the `artist_id` if it exists,
-            // Otherwise, insert a new artist item and return the new inserted item's `artist_id`  
-            let artist_id = tx.query_row(
-                "SELECT ArtistID FROM Artists WHERE Name = ?",
-                params![&artist_name],
-                |row| row.get(0),
-            ).unwrap_or_else(|_| {
-                tx.execute(
-                    "INSERT INTO Artists (Name) VALUES (?)",
+            // Otherwise, insert a new artist item and return the new inserted item's `artist_id`
+            let artist_id = tx
+                .query_row(
+                    "SELECT ArtistID FROM Artists WHERE Name = ?",
                     params![&artist_name],
-                ).unwrap();
-                tx.last_insert_rowid()
-            });
+                    |row| row.get(0),
+                )
+                .unwrap_or_else(|_| {
+                    tx.execute(
+                        "INSERT INTO Artists (Name) VALUES (?)",
+                        params![&artist_name],
+                    )
+                    .unwrap();
+                    tx.last_insert_rowid()
+                });
 
             // Same solution for `album_id`
-            let album_id = tx.query_row(
-                "SELECT AlbumID FROM Albums WHERE Name = ? AND ArtistID = ?",
-                params![&album_name, artist_id],
-                |row| row.get(0),
-            ).unwrap_or_else(|_| {
-                tx.execute(
-                    "INSERT INTO Albums (Name, ArtistID) VALUES (?, ?)",
+            let album_id = tx
+                .query_row(
+                    "SELECT AlbumID FROM Albums WHERE Name = ? AND ArtistID = ?",
                     params![&album_name, artist_id],
-                ).unwrap();
-                tx.last_insert_rowid()
-            });
+                    |row| row.get(0),
+                )
+                .unwrap_or_else(|_| {
+                    tx.execute(
+                        "INSERT INTO Albums (Name, ArtistID) VALUES (?, ?)",
+                        params![&album_name, artist_id],
+                    )
+                    .unwrap();
+                    tx.last_insert_rowid()
+                });
 
             // Insert the track into the `Tracks` table
             match tx.execute(
@@ -201,29 +208,30 @@ fn handle_post_request(request: &str) -> (String, String) {
                     )
                 }
             }
-            
         }
         _ => (INTERNAL_SERVER_ERROR.to_string(), "Error".to_string()),
     }
 }
-
-
 
 //handle_get_request function
 fn handle_get_request(request: &str) -> (String, String) {
     println!("{}", &request);
     match (get_id(&request).parse::<i32>(), Connection::open(DB_URL)) {
         (Ok(id), Ok(conn)) => {
-            match conn.query_row("SELECT * FROM Tracks WHERE TrackID = ?", params![id], |row| {
-                Ok(Track {
-                    track_id: row.get(0)?,
-                    name: row.get(1)?,
-                    path: row.get(2)?,
-                    artist_id: row.get(3)?,
-                    album_id: row.get(4)?,
-                    duration: row.get(5)?,
-                })
-            }) {
+            match conn.query_row(
+                "SELECT * FROM Tracks WHERE TrackID = ?",
+                params![id],
+                |row| {
+                    Ok(Track {
+                        track_id: row.get(0)?,
+                        name: row.get(1)?,
+                        path: row.get(2)?,
+                        artist_id: row.get(3)?,
+                        album_id: row.get(4)?,
+                        duration: row.get(5)?,
+                    })
+                },
+            ) {
                 Ok(track) => (
                     OK_RESPONSE.to_string(),
                     serde_json::to_string(&track).unwrap(),

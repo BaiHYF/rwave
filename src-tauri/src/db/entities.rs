@@ -1,6 +1,5 @@
 use serde_derive::{Deserialize, Serialize};
 
-
 /// Tracks
 /// - TrackID (Primary Key)
 /// - Name
