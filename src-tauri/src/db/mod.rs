@@ -1,21 +1,16 @@
 use rusqlite::Error as RusqError;
 use rusqlite::{params, Connection, Result};
-use serde_derive::{Deserialize, Serialize};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::thread;
 
 mod constants;
+mod entities;
+mod utils;
 
 use constants::*;
-
-// Model: Track struct with id, name, path
-#[derive(Serialize, Deserialize)]
-pub struct Track {
-    pub track_id: Option<i32>,
-    pub name: String,
-    pub path: String,
-}
+use entities::*;
+use utils::*;
 
 pub fn start() {
     println!("Starting databse: {}", DB_URL);
@@ -52,15 +47,45 @@ fn set_database() -> Result<(), RusqError> {
     println!("Connecting to database {}...", DB_URL);
     let conn = Connection::open(DB_URL).unwrap();
 
-    // Create table
-    // conn.execute("DROP TABLE IF EXISTS tracks", ())?;
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS tracks (
-            track_id   INTEGER PRIMARY KEY,
-            name TEXT NOT NULL,
-            path TEXT NOT NULL
-        )",
-        (), // empty list of parameters.
+        "
+        CREATE TABLE IF NOT EXISTS Artists (
+            ArtistID INTEGER PRIMARY KEY,
+            Name TEXT NOT NULL
+        );
+        
+        CREATE TABLE IF NOT EXISTS Albums (
+            AlbumID INTEGER PRIMARY KEY,
+            Name TEXT NOT NULL,
+            ArtistID INTEGER NOT NULL,
+            FOREIGN KEY(ArtistID) REFERENCES Artists(ArtistID)
+        );
+        
+        CREATE TABLE IF NOT EXISTS Tracks (
+            TrackID INTEGER PRIMARY KEY,
+            Name TEXT NOT NULL,
+            Path TEXT NOT NULL,
+            ArtistID INTEGER NOT NULL,
+            AlbumID INTEGER NOT NULL,
+            Duration INTEGER,
+            FOREIGN KEY(ArtistID) REFERENCES Artists(ArtistID),
+            FOREIGN KEY(AlbumID) REFERENCES Albums(AlbumID)
+        );
+        
+        CREATE TABLE IF NOT EXISTS Playlists (
+            PlaylistID INTEGER PRIMARY KEY,
+            Name TEXT NOT NULL
+        );
+        
+        CREATE TABLE IF NOT EXISTS TrackPlaylist (
+            TrackID INTEGER NOT NULL,
+            PlaylistID INTEGER NOT NULL,
+            PRIMARY KEY(TrackID, PlaylistID),
+            FOREIGN KEY(TrackID) REFERENCES Tracks(TrackID),
+            FOREIGN KEY(PlaylistID) REFERENCES Playlists(PlaylistID)
+        );
+        ",
+        (),
     )?;
 
     Ok(())
@@ -105,18 +130,65 @@ fn handle_client(mut stream: TcpStream) {
 //handle_post_request function
 fn handle_post_request(request: &str) -> (String, String) {
     match (get_user_request_body(&request), Connection::open(DB_URL)) {
-        (Ok(track), Ok(conn)) => {
-            println!(
-                "INSERT INTO tracks (name, path) VALUES ({}, {})",
-                &track.name, &track.path
-            );
+        (Ok(track), Ok(mut conn)) => {
+            // Parse the MP3 tags
+            let (title, artist, album) = parse_mp3_tags(&track.path).unwrap_or((None, None, None));
 
-            match conn.execute(
-                "INSERT INTO tracks (name, path) VALUES (?1, ?2)",
-                (&track.name, &track.path),
+            let track_name = match title {
+                Some(t) => t,
+                None => "Unknown Title".to_string(),
+            };
+            let artist_name = match artist {
+                Some(a) => a,
+                None => "Unknown Artist".to_string(),
+            };
+            let album_name = match album {
+                Some(a) => a,
+                None => "Unknown Album".to_string(),
+            };
+
+            // Begin a transaction, for this series of operations
+            let tx = conn.transaction().unwrap();
+        
+            // Search for the artist with name = `artist_name` in table `Artists`,
+            // Get the `artist_id` if it exists,
+            // Otherwise, insert a new artist item and return the new inserted item's `artist_id`  
+            let artist_id = tx.query_row(
+                "SELECT artist_id FROM Artists WHERE name = ?",
+                params![&artist_name],
+                |row| row.get(0),
+            ).unwrap_or_else(|_| {
+                tx.execute(
+                    "INSERT INTO Artists (name) VALUES (?)",
+                    params![&artist_name],
+                ).unwrap();
+                tx.last_insert_rowid()
+            });
+
+            // Same solution for `album_id`
+            let album_id = tx.query_row(
+                "SELECT album_id FROM Albums WHERE name = ? AND artist_id = ?",
+                params![&album_name, artist_id],
+                |row| row.get(0),
+            ).unwrap_or_else(|_| {
+                tx.execute(
+                    "INSERT INTO Albums (name, artist_id) VALUES (?, ?)",
+                    params![&album_name, artist_id],
+                ).unwrap();
+                tx.last_insert_rowid()
+            });
+
+            // Insert the track into the `Tracks` table
+            match tx.execute(
+                "INSERT INTO Tracks (name, path, artist_id, album_id) VALUES (?1, ?2, ?3, ?4)",
+                params![&track_name, &track.path, artist_id, album_id],
             ) {
-                Ok(_) => (OK_RESPONSE.to_string(), "Track created".to_string()),
+                Ok(_) => {
+                    tx.commit().unwrap();
+                    (OK_RESPONSE.to_string(), "Track created".to_string())
+                },
                 Err(e) => {
+                    tx.rollback().unwrap();
                     println!("Database error: {}", e);
                     (
                         INTERNAL_SERVER_ERROR.to_string(),
@@ -124,10 +196,13 @@ fn handle_post_request(request: &str) -> (String, String) {
                     )
                 }
             }
+            
         }
         _ => (INTERNAL_SERVER_ERROR.to_string(), "Error".to_string()),
     }
 }
+
+
 
 //handle_get_request function
 fn handle_get_request(request: &str) -> (String, String) {
@@ -139,6 +214,8 @@ fn handle_get_request(request: &str) -> (String, String) {
                     track_id: row.get(0)?,
                     name: row.get(1)?,
                     path: row.get(2)?,
+                    artist_id: row.get(3)?,
+                    album_id: row.get(4)?,
                 })
             }) {
                 Ok(track) => (
@@ -165,6 +242,8 @@ fn handle_get_all_request(_request: &str) -> (String, String) {
                         track_id: row.get(0)?,
                         name: row.get(1)?,
                         path: row.get(2)?,
+                        artist_id: row.get(3)?,
+                        album_id: row.get(4)?,
                     })
                 })
                 .unwrap();
@@ -220,7 +299,7 @@ fn handle_delete_request(request: &str) -> (String, String) {
     }
 }
 
-//get_id function
+// get_id function
 fn get_id(request: &str) -> &str {
     request
         .split("/")
@@ -231,7 +310,7 @@ fn get_id(request: &str) -> &str {
         .unwrap_or_default()
 }
 
-//deserialize user from request body with the id
+// deserialize user from request body with the id
 fn get_user_request_body(request: &str) -> Result<Track, serde_json::Error> {
     serde_json::from_str(request.split("\r\n\r\n").last().unwrap_or_default())
 }
