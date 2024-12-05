@@ -52,15 +52,33 @@ fn set_database() -> Result<(), RusqError> {
         CREATE TABLE IF NOT EXISTS Artists (
             ArtistID INTEGER PRIMARY KEY,
             Name TEXT NOT NULL
-        );
-        
+        );",
+        (),
+    )?;
+
+    conn.execute(
+        "
         CREATE TABLE IF NOT EXISTS Albums (
             AlbumID INTEGER PRIMARY KEY,
             Name TEXT NOT NULL,
             ArtistID INTEGER NOT NULL,
             FOREIGN KEY(ArtistID) REFERENCES Artists(ArtistID)
-        );
-        
+        );",
+        (),
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_Artists_ArtistID ON Artists(ArtistID);",
+        (),
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_Albums_AlbumID ON Albums(AlbumID);",
+        (),
+    )?;
+
+    conn.execute(
+        "
         CREATE TABLE IF NOT EXISTS Tracks (
             TrackID INTEGER PRIMARY KEY,
             Name TEXT NOT NULL,
@@ -70,21 +88,27 @@ fn set_database() -> Result<(), RusqError> {
             Duration INTEGER DEFAULT 0,
             FOREIGN KEY(ArtistID) REFERENCES Artists(ArtistID),
             FOREIGN KEY(AlbumID) REFERENCES Albums(AlbumID)
-        );
-        
+        );",
+        (),
+    )?;
+
+    conn.execute(
+        "
         CREATE TABLE IF NOT EXISTS Playlists (
             PlaylistID INTEGER PRIMARY KEY,
             Name TEXT NOT NULL
-        );
-        
+        );",
+        (),
+    )?;
+    conn.execute(
+        "
         CREATE TABLE IF NOT EXISTS TrackPlaylist (
             TrackID INTEGER NOT NULL,
             PlaylistID INTEGER NOT NULL,
             PRIMARY KEY(TrackID, PlaylistID),
             FOREIGN KEY(TrackID) REFERENCES Tracks(TrackID),
             FOREIGN KEY(PlaylistID) REFERENCES Playlists(PlaylistID)
-        );
-        ",
+        );",
         (),
     )?;
 
@@ -139,6 +163,17 @@ fn handle_post_request(request: &str) -> (String, String) {
                 Some(t) => t,
                 None => "Unknown Title".to_string(),
             };
+
+            // if `track_name` exists in database, don't insert it
+            let exist: Result<i32, _> = conn.query_row(
+                "SELECT TrackID FROM Tracks WHERE Name = ?",
+                params![&track_name],
+                |row| row.get(0),
+            );
+            if exist.is_ok() {
+                return (OK_RESPONSE.to_string(), "Track already exists".to_string());
+            }
+
             let artist_name = match artist {
                 Some(a) => a,
                 None => "Unknown Artist".to_string(),
