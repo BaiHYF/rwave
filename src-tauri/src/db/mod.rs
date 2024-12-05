@@ -43,10 +43,11 @@ pub fn start() {
 
 //set_database function
 fn set_database() -> Result<(), RusqError> {
-    //Connect to database
+    // Connect to database
     println!("Connecting to database {}...", DB_URL);
     let conn = Connection::open(DB_URL).unwrap();
 
+    // Initialize database
     conn.execute(
         "
         CREATE TABLE IF NOT EXISTS Artists (
@@ -109,6 +110,13 @@ fn set_database() -> Result<(), RusqError> {
             FOREIGN KEY(TrackID) REFERENCES Tracks(TrackID),
             FOREIGN KEY(PlaylistID) REFERENCES Playlists(PlaylistID)
         );",
+        (),
+    )?;
+
+    // Create a default playlist, which stores all the tracks
+    conn.execute(
+        "
+        INSERT OR IGNORE INTO Playlists (Name) VALUES ('All Tracks');",
         (),
     )?;
 
@@ -231,6 +239,15 @@ fn handle_post_request(request: &str) -> (String, String) {
                 params![&track_name, &track.path, artist_id, album_id, track_duration],
             ) {
                 Ok(_) => {
+                    let track_id = tx.last_insert_rowid();
+
+                    // Add the track to the playlist "All Tracks"
+                    tx.execute(
+                        "INSERT INTO TrackPlaylist (TrackID, PlaylistID) VALUES (?1, ?2)",
+                        params![track_id, 1],
+                    )
+                    .unwrap();
+
                     tx.commit().unwrap();
                     (OK_RESPONSE.to_string(), "Track created".to_string())
                 },

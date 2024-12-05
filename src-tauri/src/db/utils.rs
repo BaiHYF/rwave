@@ -1,7 +1,7 @@
 use id3::{Tag, TagLike};
-use rodio::{Decoder, OutputStream, source::Source};
-use std::io::BufReader;
+use rodio::{source::Source, Decoder, OutputStream};
 use std::fs::File;
+use std::io::BufReader;
 
 /// Parses the tags from an MP3 file.
 /// Returns the title, artist, and album name.
@@ -12,7 +12,6 @@ pub fn parse_mp3_tags(
     let tag = Tag::read_from_path(path)?;
     let file = BufReader::new(File::open(path).unwrap());
     let source = Decoder::new(file).unwrap();
-
 
     Ok((
         tag.title().map(|s| s.to_string()),
