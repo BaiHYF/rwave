@@ -12,29 +12,22 @@ import {
     SelectScrollUpButton,
     SelectScrollDownButton,
 } from "@/components/ui/select"
-import exp from "constants";
 import { useTrack } from "@/components/trackcontext";
 
 
 export interface Track {
-    id : number,
+    track_id : number,
     name : string,
     path : string,
+    artist_id : number,
+    album_id : number,
+    duration : number,
 }
 
 
 export const db_url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7744';
-// export const [updateTrack, setUpdateTrack] = useState({id: '', name: '', path: ''});
-// const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
-// const [tracks, setTracks] = useState<Track[]>([]); // Tracks in current playlist
-
 
 const TrackList = () => {
-    // const [tracks, setTracks] = useState<Track[]>([]); // Tracks in current playlist
-    // const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
-    // const [newTrack, setNewTrack] = useState({name: '', path: ''}); // To create a new track
-    // const [updateTrack, setUpdateTrack] = useState({id: '', name: '', path: ''});
-
     const { currentTrack, setCurrentTrack, tracks, setTracks } = useTrack();
     const [selectedTrackName, setSelectedTrackName] = useState<string>("");
 
@@ -42,6 +35,7 @@ const TrackList = () => {
         const fetchAllTrack = async () => {
             try {
                 const response = await axios.get(`${db_url}/tracks`);
+                console.log('All tracks:', response.data);
                 setTracks(response.data);
             } catch (error) {
                 console.error('Error fetching data: ', error);
@@ -73,11 +67,6 @@ const TrackList = () => {
               }
         }
 
-        // Reset the selected value to show the placeholder
-        // const selectValueElement = document.querySelector('.select-value');
-        // if (selectValueElement) {
-        //     selectValueElement.textContent = 'Select a track';
-        // }
     };
 
     return (
@@ -91,7 +80,7 @@ const TrackList = () => {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectScrollUpButton />
-                        <SelectGroup>
+                        <SelectGroup key= "group">
                             <SelectLabel>Default Playlist</SelectLabel>
                             {tracks.map((track) => (
                                 <SelectItem key={track.id} value={track.name}>

@@ -4,6 +4,7 @@ use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::thread;
 
+mod dbcommands;
 mod constants;
 mod entities;
 mod utils;
