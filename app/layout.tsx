@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 // import Greet from './play'
 import { TrackProvider } from "@/components/context/trackcontext";
+import { PlaylistProvider } from "@/components/context/playlistcontext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -30,9 +31,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <TrackProvider>
-          {children}
-        </TrackProvider>
+        <PlaylistProvider>
+          <TrackProvider>{children}</TrackProvider>
+        </PlaylistProvider>
       </body>
     </html>
   );

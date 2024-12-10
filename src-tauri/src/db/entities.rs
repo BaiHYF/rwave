@@ -20,6 +20,7 @@ pub struct Track {
 /// Artists
 /// - ArtistID (Primary Key)
 /// - Name
+#[derive(Serialize, Deserialize)]
 pub struct Artist {
     pub artist_id: Option<i32>,
     pub name: String,
@@ -29,6 +30,7 @@ pub struct Artist {
 /// - AlbumID (Primary Key)
 /// - Name
 /// - ArtistID (Foreign Key): Reference to the artist.
+#[derive(Serialize, Deserialize)]
 pub struct Album {
     pub album_id: Option<i32>,
     pub name: String,
@@ -38,6 +40,7 @@ pub struct Album {
 /// Playlists
 /// - PlaylistID (Primary Key)
 /// - Name
+#[derive(Serialize, Deserialize)]
 pub struct Playlist {
     pub playlist_id: Option<i32>,
     pub name: String,

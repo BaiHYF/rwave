@@ -1,5 +1,5 @@
-use super::constants::*;
 use super::entities::Track;
+use super::{constants::*, Playlist};
 // use rusqlite::Error as RusqError;
 use rusqlite::{params, Connection, Result};
 
@@ -164,4 +164,28 @@ pub fn rename_playlist(playlist_id: i32, new_name: String) -> Result<(), String>
     .map_err(|e| e.to_string())?;
 
     Ok(())
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub fn get_all_playlists() -> Vec<Playlist> {
+    let conn = Connection::open(DB_URL).unwrap();
+
+    let mut all_playlists = Vec::new();
+
+    let mut stmt = conn.prepare("SELECT * FROM Playlists").unwrap();
+
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(Playlist {
+                playlist_id: row.get(0)?,
+                name: row.get(1)?,
+            })
+        })
+        .unwrap();
+
+    for row in rows {
+        all_playlists.push(row.unwrap());
+    }
+
+    all_playlists
 }

@@ -5,8 +5,8 @@ use std::net::{TcpListener, TcpStream};
 use std::thread;
 
 mod constants;
-pub mod playlistcommands;
 mod entities;
+pub mod playlistcommands;
 mod utils;
 
 use constants::*;
@@ -117,7 +117,7 @@ fn set_database() -> Result<(), RusqError> {
     // Create a default playlist, which stores all the tracks
     conn.execute(
         "
-        INSERT OR IGNORE INTO Playlists (Name) VALUES ('All Tracks');",
+        INSERT OR IGNORE INTO Playlists (PlaylistID, Name) VALUES (1, 'All Tracks');",
         (),
     )?;
 

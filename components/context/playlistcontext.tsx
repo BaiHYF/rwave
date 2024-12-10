@@ -8,10 +8,10 @@ export interface Playlist {
 }
 
 export interface PlaylistContextType {
-  currentPlaylist: Playlist | null;
-  setCurrentPlaylist: React.Dispatch<React.SetStateAction<Playlist | null>>;
-  allPlaylists: Playlist[];
-  setAllPlaylists: React.Dispatch<React.SetStateAction<Playlist[]>>;
+  playlist: Playlist | null;
+  setPlaylist: React.Dispatch<React.SetStateAction<Playlist | null>>;
+  playlists: Playlist[];
+  setPlaylists: React.Dispatch<React.SetStateAction<Playlist[]>>;
 }
 
 const PlaylistContext = createContext<PlaylistContextType | undefined>(
@@ -26,15 +26,15 @@ export const PlaylistProvider: React.FC<PlaylistProviderProps> = ({
   children,
 }) => {
   const [currentPlaylist, setCurrentPlaylist] = useState<Playlist | null>(null);
-  const [allPlaylists, setAllPlaylists] = useState<Playlist[]>([]); // Tracks in current playlist
+  const [allPlaylists, setAllPlaylists] = useState<Playlist[]>([]);
 
   return (
     <PlaylistContext.Provider
       value={{
-        currentPlaylist,
-        setCurrentPlaylist,
-        allPlaylists,
-        setAllPlaylists,
+        playlist: currentPlaylist,
+        setPlaylist: setCurrentPlaylist,
+        playlists: allPlaylists,
+        setPlaylists: setAllPlaylists,
       }}
     >
       {children}
