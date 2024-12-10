@@ -5,7 +5,7 @@ use std::net::{TcpListener, TcpStream};
 use std::thread;
 
 mod constants;
-pub mod dbcommands;
+pub mod playlistcommands;
 mod entities;
 mod utils;
 

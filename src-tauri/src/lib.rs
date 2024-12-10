@@ -30,12 +30,12 @@ pub fn run() {
             commands::pause_track,
             commands::subscribe_player_event,
             commands::unsubscribe_player_event,
-            db::dbcommands::get_tracks_from_playlist,
-            db::dbcommands::create_playlist,
-            db::dbcommands::delete_playlist,
-            db::dbcommands::add_track_to_playlist,
-            db::dbcommands::remove_track_from_playlist,
-            db::dbcommands::rename_playlist,
+            db::playlistcommands::get_tracks_from_playlist,
+            db::playlistcommands::create_playlist,
+            db::playlistcommands::delete_playlist,
+            db::playlistcommands::add_track_to_playlist,
+            db::playlistcommands::remove_track_from_playlist,
+            db::playlistcommands::rename_playlist,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
