@@ -1,14 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState } from "react";
 
 export interface Track {
-  track_id: number,
-  name: string,
-  path: string,
-  artist_id: number,
-  album_id: number,
-  duration: number,
+  track_id: number;
+  name: string;
+  path: string;
+  artist_id: number;
+  album_id: number;
+  duration: number;
 }
 
 export interface TrackContextType {
@@ -29,7 +29,9 @@ export const TrackProvider: React.FC<TrackProviderProps> = ({ children }) => {
   const [tracks, setTracks] = useState<Track[]>([]); // Tracks in current playlist
 
   return (
-    <TrackContext.Provider value={{ currentTrack, setCurrentTrack, tracks, setTracks }}>
+    <TrackContext.Provider
+      value={{ currentTrack, setCurrentTrack, tracks, setTracks }}
+    >
       {children}
     </TrackContext.Provider>
   );
@@ -38,7 +40,7 @@ export const TrackProvider: React.FC<TrackProviderProps> = ({ children }) => {
 export const useTrack = () => {
   const context = useContext(TrackContext);
   if (context === undefined) {
-    throw new Error('useTrack must be used within a TrackProvider');
+    throw new Error("useTrack must be used within a TrackProvider");
   }
   return context;
 };
