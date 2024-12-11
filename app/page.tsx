@@ -16,7 +16,7 @@ import { Slider } from "@/components/ui/slider";
 import ScrollTrackList from "@/components/ui/tracklist";
 import { db_url } from "@/components/ui/tracklist";
 import axios from "axios";
-import { useTrack } from "@/components/context/trackcontext";
+import { useTrack, Track, Album } from "@/components/context/trackcontext";
 import {
   Card,
   CardContent,
@@ -39,7 +39,7 @@ import { Separator } from "@/components/ui/separator";
 import { The_Cyclops_in_Love } from "./placeholder";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Track } from "@radix-ui/react-slider";
+// import { Track } from "@radix-ui/react-slider";
 import { usePlayStateContext } from "@/components/context/playstatecontext";
 import { Marquee } from "@/components/ui/marquee";
 
@@ -59,6 +59,7 @@ export default function Home() {
   const [duration, setDuration] = useState(0);
   const { currentTrack, setCurrentTrack, tracks, setTracks } = useTrack();
   const { playState, setPlayState } = usePlayStateContext();
+  const [albumName, setAlbumName] = useState("Unknown Album");
 
   // window size
   const width: string = "950px";
@@ -172,6 +173,21 @@ export default function Home() {
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   };
 
+  const getTrackAlbum = async (track: Track) => {
+    await invoke("get_album", { album_id: track.album_id }).then((data) => {
+      const album = data as Album;
+      if (album) {
+        setAlbumName(album.name);
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (currentTrack) {
+      getTrackAlbum(currentTrack);
+    }
+  }, [currentTrack]);
+
   return (
     <main>
       {/* Main page , beside sidebar */}
@@ -212,7 +228,7 @@ export default function Home() {
                 : "Something very very long in order to test the marquee, of course i wish it works"}
             </Marquee>
             <div className="flex justify-start items-center space-x-4 text-sm text-zinc-600">
-              <div>Album name</div>
+              <div>{albumName}</div>
               <Separator orientation="vertical" />
               <div>Artist name</div>
             </div>

@@ -37,6 +37,7 @@ pub fn run() {
             db::playlistcommands::remove_track_from_playlist,
             db::playlistcommands::rename_playlist,
             db::playlistcommands::get_all_playlists,
+            db::trackcommands::get_album,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

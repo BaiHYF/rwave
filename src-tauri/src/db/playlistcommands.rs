@@ -1,6 +1,5 @@
 use super::entities::Track;
 use super::{constants::*, Playlist};
-// use rusqlite::Error as RusqError;
 use rusqlite::{params, Connection, Result};
 
 #[tauri::command(rename_all = "snake_case")]

@@ -8,6 +8,7 @@ mod constants;
 mod entities;
 pub mod playlistcommands;
 mod utils;
+pub mod trackcommands;
 
 use constants::*;
 use entities::*;
