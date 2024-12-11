@@ -17,6 +17,11 @@ export interface Album {
   artist_id: number;
 }
 
+export interface Artist {
+  artist_id: number;
+  name: string;
+}
+
 export interface TrackContextType {
   currentTrack: Track | null;
   setCurrentTrack: React.Dispatch<React.SetStateAction<Track | null>>;

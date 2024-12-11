@@ -16,7 +16,12 @@ import { Slider } from "@/components/ui/slider";
 import ScrollTrackList from "@/components/ui/tracklist";
 import { db_url } from "@/components/ui/tracklist";
 import axios from "axios";
-import { useTrack, Track, Album } from "@/components/context/trackcontext";
+import {
+  useTrack,
+  Track,
+  Album,
+  Artist,
+} from "@/components/context/trackcontext";
 import {
   Card,
   CardContent,
@@ -60,6 +65,7 @@ export default function Home() {
   const { currentTrack, setCurrentTrack, tracks, setTracks } = useTrack();
   const { playState, setPlayState } = usePlayStateContext();
   const [albumName, setAlbumName] = useState("Unknown Album");
+  const [artistName, setArtistName] = useState("Unknown Artist");
 
   // window size
   const width: string = "950px";
@@ -182,16 +188,26 @@ export default function Home() {
     });
   };
 
+  const getTrackArtist = async (track: Track) => {
+    await invoke("get_artist", { artist_id: track.artist_id }).then((data) => {
+      const artist = data as Artist;
+      if (artist) {
+        setArtistName(artist.name);
+      }
+    });
+  };
+
   useEffect(() => {
     if (currentTrack) {
       getTrackAlbum(currentTrack);
+      getTrackArtist(currentTrack);
     }
   }, [currentTrack]);
 
   return (
     <main>
       {/* Main page , beside sidebar */}
-      <Card className="w-[750px] h-[375px]">
+      <Card className="w-[750px] h-[375px] space-y-0">
         <CardHeader>
           <Menubar>
             <MenubarMenu>
@@ -230,17 +246,13 @@ export default function Home() {
             <div className="flex justify-start items-center space-x-4 text-sm text-zinc-600">
               <div>{albumName}</div>
               <Separator orientation="vertical" />
-              <div>Artist name</div>
+              <div>{artistName}</div>
             </div>
             {/* 
               I have no idea what to put here, at least for now
               So I just leave something to hold the space.
             */}
-            {/* <Textarea
-              className="h-[100px]"
-              placeholder={The_Cyclops_in_Love}
-            ></Textarea> */}
-            <Card className="h-[150px]"></Card>
+            <Card className="h-[100px]"></Card>
             <Slider
               value={[Math.round(position)]}
               max={Math.round(duration)}
@@ -251,31 +263,39 @@ export default function Home() {
               <span>{formatSecond(Math.round(position))}</span>
               <span>{formatSecond(Math.round(duration))}</span>
             </div>
+            {/* <Separator className="my-0 width-[950px]" /> */}
           </div>
         </CardContent>
-        <Separator className="my-0 width-[950px]" />
-        <CardFooter className="flex justify-center gap-x-0">
-          <Button variant="link" className="flex-none" onClick={handleLast}>
-            <div className="font-bold">⏮</div>
-            last track
-          </Button>
-          <Separator orientation="vertical" />
-          {playState ? (
-            <Button variant="link" className="flex-none" onClick={handlePause}>
-              <div className="font-bold">⏸</div>
-              pause
+        {/* <Separator className="my-0 width-[950px]" /> */}
+        <CardFooter className="flex flex-col justify-center gap-x-0">
+          <Separator className="my-0 width-[950px]" />
+          <div className="flex justify-center gap-x-0">
+            <Button variant="link" className="flex-none" onClick={handleLast}>
+              <div className="font-bold">⏮</div>
+              last track
             </Button>
-          ) : (
-            <Button variant="link" className="flex-none" onClick={handlePlay}>
-              <div className="font-bold">⏵</div>
-              play
+            <Separator orientation="vertical" />
+            {playState ? (
+              <Button
+                variant="link"
+                className="flex-none"
+                onClick={handlePause}
+              >
+                <div className="font-bold">⏸</div>
+                pause
+              </Button>
+            ) : (
+              <Button variant="link" className="flex-none" onClick={handlePlay}>
+                <div className="font-bold">⏵</div>
+                play
+              </Button>
+            )}
+            <Separator orientation="vertical" />
+            <Button variant="link" className="flex-none" onClick={handleNext}>
+              <div className="font-bold">⏭</div>
+              next track
             </Button>
-          )}
-          <Separator orientation="vertical" />
-          <Button variant="link" className="flex-none" onClick={handleNext}>
-            <div className="font-bold">⏭</div>
-            next track
-          </Button>
+          </div>
         </CardFooter>
       </Card>
     </main>

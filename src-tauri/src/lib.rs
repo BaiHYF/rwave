@@ -38,6 +38,7 @@ pub fn run() {
             db::playlistcommands::rename_playlist,
             db::playlistcommands::get_all_playlists,
             db::trackcommands::get_album,
+            db::trackcommands::get_artist,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
