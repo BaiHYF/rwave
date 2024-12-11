@@ -200,18 +200,17 @@ export default function Home() {
             </MenubarMenu>
           </Menubar>
         </CardHeader>
-        <CardContent className="flex justify-start space-x-4 w-full">
+        <CardContent className="flex justify-start space-x-4 w-[300px]">
           <div>
             <ScrollTrackList />
           </div>
           <Separator orientation="vertical" />
-          <div className="space-y-2 mb-4 w-[525px] flex flex-col">
-            <Marquee className="font-semibold text-zinc-700 w-full">
-              {currentTrack ? currentTrack.name : "No track selected"}
+          <div className="space-y-2 mb-4 w-[450px] flex flex-col">
+            <Marquee className="font-semibold text-zinc-700 w-[450px]">
+              {currentTrack
+                ? currentTrack.name
+                : "Something very very long in order to test the marquee, of course i wish it works"}
             </Marquee>
-            {/* <div className="font-semibold">
-              <p>{currentTrack ? currentTrack.name : "No track selected"}</p>
-            </div> */}
             <div className="flex justify-start items-center space-x-4 text-sm text-zinc-600">
               <div>Album name</div>
               <Separator orientation="vertical" />
@@ -221,10 +220,11 @@ export default function Home() {
               I have no idea what to put here, at least for now
               So I just leave something to hold the space.
             */}
-            <Textarea
+            {/* <Textarea
               className="h-[100px]"
               placeholder={The_Cyclops_in_Love}
-            ></Textarea>
+            ></Textarea> */}
+            <Card className="h-[150px]"></Card>
             <Slider
               value={[Math.round(position)]}
               max={Math.round(duration)}
