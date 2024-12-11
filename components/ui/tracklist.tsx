@@ -13,14 +13,18 @@ import {
 } from "@/components/ui/select";
 import { useTrack, Track } from "@/components/context/trackcontext";
 import { usePlaylist, Playlist } from "../context/playlistcontext";
+import { Button } from "@/components/ui/button";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { usePlayStateContext } from "../context/playstatecontext";
 
 export const db_url =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:7744";
 
-const TrackList = () => {
+const ScrollTrackList = () => {
   const { currentTrack, setCurrentTrack, tracks, setTracks } = useTrack();
   const { playlist, setPlaylist, playlists, setPlaylists } = usePlaylist();
   const [selectedTrackName, setSelectedTrackName] = useState<string>("");
+  const { playState, setPlayState } = usePlayStateContext();
 
   useEffect(() => {
     const fetchAllPlaylist = async () => {
@@ -64,44 +68,49 @@ const TrackList = () => {
     fetchAllTracksFromPlaylist();
   }, [playlist]);
 
-  const handleSelectChange = async (value: string) => {
-    const selectedTrack = tracks.find((track) => track.name === value);
-    if (selectedTrack) {
-      setCurrentTrack(selectedTrack);
-      const filepath = selectedTrack.path;
-      if (filepath !== null) {
-        await invoke("load_track", { filePath: filepath });
-      }
+  const handleButtonClick = async (track: Track) => {
+    setCurrentTrack(track);
+    const filepath = track.path;
+    if (filepath !== null) {
+      await invoke("load_track", { filePath: filepath });
+      setPlayState(true);
     }
   };
 
   return (
     <div>
-      {tracks.length === 0 ? (
-        <p>No tracks available.</p>
-      ) : (
-        <Select onValueChange={handleSelectChange} value={selectedTrackName}>
-          <SelectTrigger className="w-[280px]">
-            <SelectValue
-              placeholder={currentTrack ? currentTrack.name : "Select a track"}
-            />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectScrollUpButton />
-            <SelectGroup key="group">
-              <SelectLabel>Default Playlist</SelectLabel>
-              {tracks.map((track) => (
-                <SelectItem key={track.track_id} value={track.name}>
-                  {track.name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-            <SelectScrollDownButton />
-          </SelectContent>
-        </Select>
-      )}
+      <ScrollArea
+        className="w-[200px] h-[200px] "
+        // style={{ overflow: "hidden" }}
+      >
+        {tracks.length === 0 ? (
+          <p>No tracks available.</p>
+        ) : (
+          <div>
+            <span className="pt-2 font-semibold font-mono text-muted-foreground italic">
+              {playlist?.name}
+            </span>
+            {tracks.map((track) => (
+              <figure key={track.track_id}>
+                <div className="overflow-hidden">
+                  <Button
+                    onClick={() => handleButtonClick(track)}
+                    variant="link"
+                    className={`font-sans
+                       ${
+                         track === currentTrack ? "font-bold" : "text-zinc-500"
+                       }`}
+                  >
+                    {track.name}
+                  </Button>
+                </div>
+              </figure>
+            ))}
+          </div>
+        )}
+      </ScrollArea>
     </div>
   );
 };
 
-export default TrackList;
+export default ScrollTrackList;

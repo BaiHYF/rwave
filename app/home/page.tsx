@@ -13,7 +13,7 @@ import { invoke, Channel } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { readDir, BaseDirectory } from "@tauri-apps/plugin-fs";
 import { Slider } from "@/components/ui/slider";
-import TrackList from "@/components/ui/tracklist";
+import ScrollTrackList from "@/components/ui/tracklist";
 import { db_url } from "@/components/ui/tracklist";
 import axios from "axios";
 import { useTrack } from "@/components/context/trackcontext";
@@ -189,7 +189,7 @@ export default function Home() {
           {/* Track List */}
           <div className="max-w-[300px] w-full mx-auto mt-4">
             {/* <div className='max-w-[300px] w-full p-4 mx-auto shadow-lg rounded-lg'> */}
-            <TrackList />
+            <ScrollTrackList />
           </div>
         </div>
       </div>

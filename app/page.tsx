@@ -13,7 +13,7 @@ import { invoke, Channel } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { readDir, BaseDirectory } from "@tauri-apps/plugin-fs";
 import { Slider } from "@/components/ui/slider";
-import TrackList from "@/components/ui/tracklist";
+import ScrollTrackList from "@/components/ui/tracklist";
 import { db_url } from "@/components/ui/tracklist";
 import axios from "axios";
 import { useTrack } from "@/components/context/trackcontext";
@@ -37,6 +37,10 @@ import {
 } from "@/components/ui/menubar";
 import { Separator } from "@/components/ui/separator";
 import { The_Cyclops_in_Love } from "./placeholder";
+import { AppSidebar } from "@/components/app-sidebar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Track } from "@radix-ui/react-slider";
+import { usePlayStateContext } from "@/components/context/playstatecontext";
 
 type PlayerEvent =
   | { event: "playing" }
@@ -52,8 +56,12 @@ type PlayerEvent =
 export default function Home() {
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
-
   const { currentTrack, setCurrentTrack, tracks, setTracks } = useTrack();
+  const { playState, setPlayState } = usePlayStateContext();
+
+  // window size
+  const width: string = "950px";
+  const height: string = "500px";
 
   useEffect(() => {
     const channel = new Channel<PlayerEvent>();
@@ -113,12 +121,12 @@ export default function Home() {
 
   const handlePlay = useCallback(async () => {
     await invoke("play_track");
-    setIsPlaying(true);
+    setPlayState(true);
   }, []);
 
   const handlePause = useCallback(async () => {
     await invoke("pause_track");
-    setIsPlaying(false);
+    setPlayState(false);
   }, []);
 
   const handleNext = useCallback(async () => {
@@ -133,6 +141,7 @@ export default function Home() {
         setCurrentTrack(nextTrack);
         const nextpath = nextTrack.path;
         await invoke("load_track", { filePath: nextpath });
+        setPlayState(true);
       }
     }
   }, [currentTrack, tracks, setCurrentTrack, invoke]);
@@ -149,6 +158,7 @@ export default function Home() {
         setCurrentTrack(lastTrack);
         const nextpath = lastTrack.path;
         await invoke("load_track", { filePath: nextpath });
+        setPlayState(true);
       }
     }
   }, [currentTrack, tracks, setCurrentTrack, invoke]);
@@ -161,12 +171,10 @@ export default function Home() {
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   };
 
-  const [isPlaying, setIsPlaying] = useState(false);
-
   return (
     <main>
       {/* Main page , beside sidebar */}
-      <Card className="max-w-[600px] max-h-[1000px]">
+      <Card className="w-[750px] h-[375px]">
         <CardHeader>
           <Menubar>
             <MenubarMenu>
@@ -191,7 +199,13 @@ export default function Home() {
             </MenubarMenu>
           </Menubar>
         </CardHeader>
-        <CardContent className="flex justify-center">
+        <CardContent className="flex justify-center mr-1 space-x-4 ">
+          <div>
+            <ScrollTrackList />
+          </div>
+
+          <Separator orientation="vertical" />
+
           <div className="space-y-2 mb-4 w-[525px] flex flex-col">
             <div className="font-semibold">
               <p>{currentTrack ? currentTrack.name : "No track selected"}</p>
@@ -206,7 +220,7 @@ export default function Home() {
               So I just leave something to hold the space.
             */}
             <Textarea
-              className="h-[150px]"
+              className="h-[100px]"
               placeholder={The_Cyclops_in_Love}
             ></Textarea>
             <Slider
@@ -221,14 +235,14 @@ export default function Home() {
             </div>
           </div>
         </CardContent>
-        <Separator className="" />
+        <Separator className="my-0 width-[950px]" />
         <CardFooter className="flex justify-center gap-x-0">
           <Button variant="link" className="flex-none" onClick={handleLast}>
             <div className="font-bold">⏮</div>
             last track
           </Button>
           <Separator orientation="vertical" />
-          {isPlaying ? (
+          {playState ? (
             <Button variant="link" className="flex-none" onClick={handlePause}>
               <div className="font-bold">⏸</div>
               pause
@@ -246,7 +260,6 @@ export default function Home() {
           </Button>
         </CardFooter>
       </Card>
-      <TrackList />
     </main>
   );
 }
