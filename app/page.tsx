@@ -41,6 +41,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Track } from "@radix-ui/react-slider";
 import { usePlayStateContext } from "@/components/context/playstatecontext";
+import { Marquee } from "@/components/ui/marquee";
 
 type PlayerEvent =
   | { event: "playing" }
@@ -199,17 +200,18 @@ export default function Home() {
             </MenubarMenu>
           </Menubar>
         </CardHeader>
-        <CardContent className="flex justify-center mr-1 space-x-4 ">
+        <CardContent className="flex justify-start space-x-4 w-full">
           <div>
             <ScrollTrackList />
           </div>
-
           <Separator orientation="vertical" />
-
           <div className="space-y-2 mb-4 w-[525px] flex flex-col">
-            <div className="font-semibold">
+            <Marquee className="font-semibold text-zinc-700 w-full">
+              {currentTrack ? currentTrack.name : "No track selected"}
+            </Marquee>
+            {/* <div className="font-semibold">
               <p>{currentTrack ? currentTrack.name : "No track selected"}</p>
-            </div>
+            </div> */}
             <div className="flex justify-start items-center space-x-4 text-sm text-zinc-600">
               <div>Album name</div>
               <Separator orientation="vertical" />
