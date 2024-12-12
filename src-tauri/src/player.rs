@@ -64,7 +64,8 @@ impl Player {
                         duration: total_duration_cln.lock().unwrap().as_secs(),
                     })
                     .unwrap();
-                std::thread::sleep(std::time::Duration::from_millis(500));
+                std::thread::sleep(std::time::Duration::from_millis(100));
+                // std::thread::sleep(std::time::Duration::from_millis(500));
             });
 
             'playback_receive_loop: loop {
