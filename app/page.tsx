@@ -47,6 +47,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 // import { Track } from "@radix-ui/react-slider";
 import { usePlayStateContext } from "@/components/context/playstatecontext";
 import { Marquee } from "@/components/ui/marquee";
+import Database from "@tauri-apps/plugin-sql";
 
 type PlayerEvent =
   | { event: "playing" }
@@ -77,7 +78,6 @@ export default function Home() {
     channel.onmessage = (message) => {
       switch (message.event) {
         case "positionUpdate":
-          console.log(message.data);
           setPosition(message.data.position);
           setDuration(message.data.duration);
           break;
@@ -179,22 +179,34 @@ export default function Home() {
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   };
 
+  const dbUrl = "sqlite:rwave.db";
+
   const getTrackAlbum = async (track: Track) => {
-    await invoke("get_album", { album_id: track.album_id }).then((data) => {
-      const album = data as Album;
-      if (album) {
-        setAlbumName(album.name);
-      }
-    });
+    const db = await Database.load(dbUrl);
+    const albumArr = (await db.select(
+      "SELECT Name FROM Albums WHERE AlbumID = $1",
+      [track.album_id]
+    )) as Array<{ Name: string }>;
+
+    if (albumArr.length > 0) {
+      setAlbumName(albumArr[0].Name);
+    } else {
+      setAlbumName("Unknown Album");
+    }
   };
 
   const getTrackArtist = async (track: Track) => {
-    await invoke("get_artist", { artist_id: track.artist_id }).then((data) => {
-      const artist = data as Artist;
-      if (artist) {
-        setArtistName(artist.name);
-      }
-    });
+    const db = await Database.load(dbUrl);
+    const artistArr = (await db.select(
+      "SELECT Name FROM Artists WHERE ArtistID = $1",
+      [track.artist_id]
+    )) as Array<{ Name: string }>;
+
+    if (artistArr.length > 0) {
+      setArtistName(artistArr[0].Name);
+    } else {
+      setArtistName("Unknown Artist");
+    }
   };
 
   useEffect(() => {

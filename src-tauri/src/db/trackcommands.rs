@@ -7,7 +7,9 @@ use rusqlite::{params, Connection, Result};
 pub fn get_album(album_id: i32) -> Album {
     let conn = Connection::open(DB_URL).unwrap();
 
-    let mut stmt = conn.prepare("SELECT * FROM Albums WHERE AlbumID = ?").unwrap();
+    let mut stmt = conn
+        .prepare("SELECT * FROM Albums WHERE AlbumID = ?")
+        .unwrap();
     let album_row = stmt.query_row(params![album_id], |row| {
         Ok(Album {
             album_id: row.get(0)?,
@@ -18,9 +20,14 @@ pub fn get_album(album_id: i32) -> Album {
 
     match album_row {
         Ok(album) => return album,
-        Err(_) => return Album { album_id: None, name: "Unknown".to_string(), artist_id: None },
+        Err(_) => {
+            return Album {
+                album_id: None,
+                name: "Unknown".to_string(),
+                artist_id: None,
+            }
+        }
     }
-
 }
 
 /// Get album by id
@@ -28,9 +35,11 @@ pub fn get_album(album_id: i32) -> Album {
 pub fn get_artist(artist_id: i32) -> Artist {
     let conn = Connection::open(DB_URL).unwrap();
 
-    let mut stmt = conn.prepare("SELECT * FROM Artists WHERE ArtistID = ?").unwrap();
+    let mut stmt = conn
+        .prepare("SELECT * FROM Artists WHERE ArtistID = ?")
+        .unwrap();
     let artist_row = stmt.query_row(params![artist_id], |row| {
-        Ok(Artist{
+        Ok(Artist {
             artist_id: row.get(0)?,
             name: row.get(1)?,
         })
@@ -38,7 +47,11 @@ pub fn get_artist(artist_id: i32) -> Artist {
 
     match artist_row {
         Ok(artist) => return artist,
-        Err(_) => return Artist{ artist_id: None, name: "Unknown Artist".to_string() },
+        Err(_) => {
+            return Artist {
+                artist_id: None,
+                name: "Unknown Artist".to_string(),
+            }
+        }
     }
-
 }

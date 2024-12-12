@@ -7,8 +7,8 @@ use std::thread;
 mod constants;
 mod entities;
 pub mod playlistcommands;
-mod utils;
 pub mod trackcommands;
+mod utils;
 
 use constants::*;
 use entities::*;
