@@ -21,6 +21,13 @@ pub fn pause_track(player: State<'_, Mutex<Player>>) {
 }
 
 #[tauri::command]
+pub fn seek_track(player: State<Mutex<Player>>, position: u64) {
+    player.lock().unwrap().seek(position);
+    // unimplemented!("command::seek_module not implemented.")
+}
+
+
+#[tauri::command]
 pub fn subscribe_player_event(
     player: State<'_, Mutex<Player>>,
     channel: Channel<PlayerEvent>,

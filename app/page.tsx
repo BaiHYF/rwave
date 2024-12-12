@@ -58,6 +58,12 @@ type PlayerEvent =
         position: number;
         duration: number;
       };
+    }
+  | {
+      event: "seeked";
+      data: {
+        position: number;
+      };
     };
 
 export default function Home() {
@@ -67,6 +73,7 @@ export default function Home() {
   const { playState, setPlayState } = usePlayStateContext();
   const [albumName, setAlbumName] = useState("Unknown Album");
   const [artistName, setArtistName] = useState("Unknown Artist");
+  const [isSeeking, setIsSeeking] = useState(false);
 
   // window size
   const width: string = "950px";
@@ -78,8 +85,14 @@ export default function Home() {
     channel.onmessage = (message) => {
       switch (message.event) {
         case "positionUpdate":
-          setPosition(message.data.position);
-          setDuration(message.data.duration);
+          if (!isSeeking) {
+            setPosition(message.data.position);
+            setDuration(message.data.duration);
+          }
+          break;
+        case "seeked":
+          console.log(message.event);
+          // setPosition(message.data.position);
           break;
         default:
           console.log(message.event);
@@ -95,7 +108,7 @@ export default function Home() {
         invoke("unsubscribe_player_event", { id: id })
       );
     };
-  }, []);
+  }, [isSeeking]);
 
   const handleLoad = useCallback(async () => {
     const filepath = await open({
@@ -270,6 +283,15 @@ export default function Home() {
               max={Math.round(duration)}
               step={1}
               className="w-full justify-center flex"
+              onValueChange={(newvalue) => {
+                setPosition(newvalue[0]);
+                setIsSeeking(true);
+              }}
+              onValueCommit={async (newvalue) => {
+                console.log("New value commited:", newvalue[0]);
+                await invoke("seek_track", { position: newvalue[0] });
+                setIsSeeking(false);
+              }}
             />
             <div className="flex justify-between items-center text-sm text-zinc-600">
               <span>{formatSecond(Math.round(position))}</span>

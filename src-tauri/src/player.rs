@@ -12,6 +12,7 @@ enum PlayerCommand {
     Load(String),
     Play,
     Pause,
+    Seek(u64),
     Terminate,
 }
 
@@ -24,6 +25,10 @@ pub enum PlayerEvent {
     PositionUpdate {
         position: u64,
         duration: u64,
+    },
+    Seeked {
+        position: u64,
+        // duration: u64,
     },
 }
 
@@ -84,6 +89,11 @@ impl Player {
                         event_sender.send(PlayerEvent::Paused).unwrap();
                         // soundtrack.lock().unwrap().pause();
                         sink.pause();
+                    }
+                    PlayerCommand::Seek(position) => {
+                        // soundtrack.lock().unwrap().seek(position);
+                        sink.try_seek(Duration::from_secs(position)).unwrap();
+                        event_sender.send(PlayerEvent::Seeked { position: position }).unwrap();
                     }
                     PlayerCommand::Terminate => {
                         break 'playback_receive_loop;
@@ -181,6 +191,11 @@ impl Player {
     pub fn pause(&self) {
         let sender = self.get_channel();
         sender.send(PlayerCommand::Pause).unwrap();
+    }
+
+    pub fn seek(&self, position: u64) {
+        let sender = self.get_channel();
+        sender.send(PlayerCommand::Seek(position)).unwrap();
     }
 
     /// Subscribe to player events, return the subscription id

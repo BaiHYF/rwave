@@ -29,6 +29,7 @@ pub fn run() {
             commands::load_track,
             commands::play_track,
             commands::pause_track,
+            commands::seek_track,
             commands::subscribe_player_event,
             commands::unsubscribe_player_event,
             db::playlistcommands::get_tracks_from_playlist,
