@@ -59,7 +59,7 @@ export default function Home() {
     const db = await Database.load(dbUrl);
     const albumArr = (await db.select(
       "SELECT Name FROM Albums WHERE AlbumID = $1",
-      [track.album_id]
+      [track.AlbumID]
     )) as Array<{ Name: string }>;
 
     if (albumArr.length > 0) {
@@ -73,7 +73,7 @@ export default function Home() {
     const db = await Database.load(dbUrl);
     const artistArr = (await db.select(
       "SELECT Name FROM Artists WHERE ArtistID = $1",
-      [track.artist_id]
+      [track.ArtistID]
     )) as Array<{ Name: string }>;
 
     if (artistArr.length > 0) {

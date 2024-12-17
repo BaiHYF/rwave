@@ -3,23 +3,23 @@
 import React, { createContext, useContext, useState } from "react";
 
 export interface Track {
-  track_id: number;
-  name: string;
-  path: string;
-  artist_id: number;
-  album_id: number;
-  duration: number;
+  TrackID: number;
+  Name: string;
+  Path: string;
+  ArtistID: number;
+  AlbumID: number;
+  Duration: number;
 }
 
 export interface Album {
-  album_id: number;
-  name: string;
-  artist_id: number;
+  AlbumID: number;
+  Name: string;
+  ArtistID: number;
 }
 
 export interface Artist {
-  artist_id: number;
-  name: string;
+  ArtistID: number;
+  Name: string;
 }
 
 export interface TrackContextType {

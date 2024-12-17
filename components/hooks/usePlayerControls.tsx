@@ -8,6 +8,7 @@ import { db_url } from "@/components/ui/tracklist";
 import { Playlist, usePlaylist } from "@/components/context/playlistcontext";
 import axios from "axios";
 import { Track } from "@/components/context/trackcontext";
+import { fetchAllTracksFromPlaylist } from "../utils/db-util";
 export const usePlayerControls = () => {
   const { currentTrack, setCurrentTrack, tracks, setTracks } = useTrack();
   const { playState, setPlayState } = usePlayStateContext();
@@ -30,7 +31,7 @@ export const usePlayerControls = () => {
       const nextTrack = tracks[nextTrackIndex];
       if (nextTrack) {
         setCurrentTrack(nextTrack);
-        await invoke("load_track", { filePath: nextTrack.path });
+        await invoke("load_track", { filePath: nextTrack.Path });
         setPlayState(true);
       }
     }
@@ -46,27 +47,11 @@ export const usePlayerControls = () => {
       const lastTrack = tracks[lastTrackIndex];
       if (lastTrack) {
         setCurrentTrack(lastTrack);
-        await invoke("load_track", { filePath: lastTrack.path });
+        await invoke("load_track", { filePath: lastTrack.Path });
         setPlayState(true);
       }
     }
   }, [currentTrack, tracks, setCurrentTrack, invoke]);
-
-  const fetchAllTracksFromPlaylist = async () => {
-    try {
-      if (playlist !== null) {
-        invoke("get_tracks_from_playlist", {
-          playlist_id: playlist.playlist_id,
-        }).then((data) => {
-          const tracksData = data as Track[];
-          setTracks(tracksData);
-        });
-      }
-      console.log(playlist);
-    } catch (error) {
-      console.error("Error fetching data: ", error);
-    }
-  };
 
   const handleLoadDir = useCallback(async () => {
     const filepath = await open({
@@ -95,7 +80,15 @@ export const usePlayerControls = () => {
           }
         }
       }
-      fetchAllTracksFromPlaylist();
+      if (playlist !== null) {
+        const trks = fetchAllTracksFromPlaylist(playlist);
+        trks.then((data) => {
+          const tracksData = data as Track[];
+          setTracks(tracksData);
+          console.log("Track data: ", tracksData);
+          console.log("Tracks : ", tracks);
+        });
+      }
     }
   }, []);
 
@@ -126,7 +119,15 @@ export const usePlayerControls = () => {
           console.log("Track added to database.");
         } catch (error) {}
       }
-      fetchAllTracksFromPlaylist();
+      if (playlist !== null) {
+        const trks = fetchAllTracksFromPlaylist(playlist);
+        trks.then((data) => {
+          const tracksData = data as Track[];
+          setTracks(tracksData);
+          console.log("Track data: ", tracksData);
+          console.log("Tracks : ", tracks);
+        });
+      }
     }
   }, []);
 

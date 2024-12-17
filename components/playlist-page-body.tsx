@@ -84,6 +84,9 @@ const PlaylistItem = ({ playlist }: PlaylistItemProps) => {
         <Button variant="link">{playlist.name}</Button>
         <Button variant="ghost">Add Track</Button>
         <Button variant="ghost">Delete Track</Button>
+        {playlist.playlist_id !== 1 && (
+          <Button variant="ghost">Delete Playlist</Button>
+        )}
       </div>
     </div>
   );

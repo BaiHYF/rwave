@@ -30,7 +30,7 @@ const TrackPageBody = ({
   return (
     <div className="space-y-2 mb-4 w-[450px] flex flex-col">
       <Marquee className="font-semibold text-zinc-700 w-[450px]">
-        {currentTrack ? currentTrack.name : "No track selected yet :)"}
+        {currentTrack ? currentTrack.Name : "No track selected yet :)"}
       </Marquee>
       <div className="flex justify-start items-center space-x-4 text-sm text-zinc-600">
         <div>{albumName}</div>

@@ -1,21 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { invoke, Channel } from "@tauri-apps/api/core";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-  SelectScrollUpButton,
-  SelectScrollDownButton,
-} from "@/components/ui/select";
 import { useTrack, Track } from "@/components/context/trackcontext";
 import { usePlaylist, Playlist } from "../context/playlistcontext";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { usePlayStateContext } from "../context/playstatecontext";
+import { fetchAllTracksFromPlaylist } from "../utils/db-util";
 
 export const db_url =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:7744";
@@ -49,28 +39,20 @@ const ScrollTrackList = () => {
   }, [playlists]);
 
   useEffect(() => {
-    const fetchAllTracksFromPlaylist = async () => {
-      try {
-        if (playlist !== null) {
-          invoke("get_tracks_from_playlist", {
-            playlist_id: playlist.playlist_id,
-          }).then((data) => {
-            const tracksData = data as Track[];
-            setTracks(tracksData);
-          });
-        }
-        console.log(playlist);
-      } catch (error) {
-        console.error("Error fetching data: ", error);
-      }
-    };
-
-    fetchAllTracksFromPlaylist();
+    if (playlist !== null) {
+      const trks = fetchAllTracksFromPlaylist(playlist);
+      trks.then((data) => {
+        const tracksData = data as Track[];
+        setTracks(tracksData);
+        console.log("Track data: ", tracksData);
+        console.log("Tracks : ", tracks);
+      });
+    }
   }, [playlist]);
 
   const handleButtonClick = async (track: Track) => {
     setCurrentTrack(track);
-    const filepath = track.path;
+    const filepath = track.Path;
     if (filepath !== null) {
       await invoke("load_track", { filePath: filepath });
       setPlayState(true);
@@ -91,7 +73,7 @@ const ScrollTrackList = () => {
               {playlist?.name}
             </span>
             {tracks.map((track) => (
-              <figure key={track.track_id}>
+              <figure key={track.TrackID}>
                 <div className="overflow-hidden">
                   <Button
                     onClick={() => handleButtonClick(track)}
@@ -101,7 +83,7 @@ const ScrollTrackList = () => {
                          track === currentTrack ? "font-bold" : "text-zinc-500"
                        }`}
                   >
-                    {track.name}
+                    {track.Name}
                   </Button>
                 </div>
               </figure>
