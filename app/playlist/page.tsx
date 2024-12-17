@@ -15,7 +15,7 @@ import Database from "@tauri-apps/plugin-sql";
 import { PlayerControls } from "@/components/player-control";
 import { usePlayerControls } from "@/components/hooks/usePlayerControls";
 import PageHeader from "@/components/page-header";
-import TrackPageBody from "@/components/track-page-body";
+import PlaylistPageBody from "@/components/playlist-page-body";
 
 type PlayerEvent =
   | { event: "playing" }
@@ -138,7 +138,7 @@ export default function Home() {
           <Separator orientation="vertical" />
 
           {/* PAGE BODY DYNAMIC */}
-          <TrackPageBody
+          <PlaylistPageBody
             currentTrack={currentTrack}
             albumName={albumName}
             artistName={artistName}

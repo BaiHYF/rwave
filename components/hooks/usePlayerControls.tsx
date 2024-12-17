@@ -5,10 +5,13 @@ import { usePlayStateContext } from "@/components/context/playstatecontext";
 import { open } from "@tauri-apps/plugin-dialog";
 import { readDir, BaseDirectory } from "@tauri-apps/plugin-fs";
 import { db_url } from "@/components/ui/tracklist";
+import { Playlist, usePlaylist } from "@/components/context/playlistcontext";
 import axios from "axios";
+import { Track } from "@/components/context/trackcontext";
 export const usePlayerControls = () => {
-  const { currentTrack, setCurrentTrack, tracks } = useTrack();
+  const { currentTrack, setCurrentTrack, tracks, setTracks } = useTrack();
   const { playState, setPlayState } = usePlayStateContext();
+  const { playlist, setPlaylist, playlists, setPlaylists } = usePlaylist();
 
   const handlePlay = useCallback(async () => {
     await invoke("play_track");
@@ -49,7 +52,23 @@ export const usePlayerControls = () => {
     }
   }, [currentTrack, tracks, setCurrentTrack, invoke]);
 
-  const handleLoad = useCallback(async () => {
+  const fetchAllTracksFromPlaylist = async () => {
+    try {
+      if (playlist !== null) {
+        invoke("get_tracks_from_playlist", {
+          playlist_id: playlist.playlist_id,
+        }).then((data) => {
+          const tracksData = data as Track[];
+          setTracks(tracksData);
+        });
+      }
+      console.log(playlist);
+    } catch (error) {
+      console.error("Error fetching data: ", error);
+    }
+  };
+
+  const handleLoadDir = useCallback(async () => {
     const filepath = await open({
       multiple: false,
       directory: true,
@@ -76,8 +95,47 @@ export const usePlayerControls = () => {
           }
         }
       }
+      fetchAllTracksFromPlaylist();
     }
   }, []);
 
-  return { handlePlay, handlePause, handleNext, handleLast, handleLoad };
+  const handleLoadFile = useCallback(async () => {
+    const filepath = await open({
+      multiple: true,
+      directory: false,
+      filters: [
+        {
+          name: "Track File",
+          extensions: ["mp3", "flac"],
+        },
+      ],
+    });
+
+    if (filepath !== null) {
+      for (const path of filepath) {
+        const trackname = path.slice(path.lastIndexOf("/") + 1, -4);
+
+        const requestBody = {
+          name: trackname,
+          path: path,
+        };
+        console.log(requestBody);
+        try {
+          const response = await axios.post(`${db_url}/tracks`, requestBody);
+          console.log(response.data);
+          console.log("Track added to database.");
+        } catch (error) {}
+      }
+      fetchAllTracksFromPlaylist();
+    }
+  }, []);
+
+  return {
+    handlePlay,
+    handlePause,
+    handleNext,
+    handleLast,
+    handleLoadDir,
+    handleLoadFile,
+  };
 };

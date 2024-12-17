@@ -47,8 +47,13 @@ export default function Home() {
   // Constants and functions
   const dbUrl = "sqlite:rwave.db";
 
-  const { handlePlay, handlePause, handleNext, handleLast, handleLoad } =
-    usePlayerControls();
+  const {
+    handlePlay,
+    handlePause,
+    handleNext,
+    handleLast,
+    handleLoadDir: handleLoad,
+  } = usePlayerControls();
 
   const getTrackAlbum = async (track: Track) => {
     const db = await Database.load(dbUrl);

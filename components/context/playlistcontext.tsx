@@ -8,9 +8,9 @@ export interface Playlist {
 }
 
 export interface PlaylistContextType {
-  playlist: Playlist | null;
+  playlist: Playlist | null; // Current playlist
   setPlaylist: React.Dispatch<React.SetStateAction<Playlist | null>>;
-  playlists: Playlist[];
+  playlists: Playlist[]; // All playlists
   setPlaylists: React.Dispatch<React.SetStateAction<Playlist[]>>;
 }
 
