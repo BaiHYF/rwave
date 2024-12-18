@@ -108,11 +108,11 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
 
   const fetchAllPlaylist = async () => {
     const dbURL = await getDatabasePath();
-    console.log("Playlistpage: Fetching all playlists from ", dbURL);
+    // console.log("Playlistpage: Fetching all playlists from ", dbURL);
     try {
       invoke("get_all_playlists", { db_url: dbURL }).then((data) => {
         const playlistsData = data as Playlist[];
-        console.log(playlistsData);
+        // console.log(playlistsData);
         setPlaylists(playlistsData);
       });
     } catch (error) {
@@ -223,31 +223,8 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
                       </AlertDialogTitle>
                     </AlertDialogHeader>
                     <AlertDialogDescription>
-                      <ScrollArea className="w-[400px] h-[100px] ">
-                        <div>
-                          {allTracks.map((track) => (
-                            <div
-                              className="overflow-hidden"
-                              key={track.TrackID}
-                            >
-                              <Button
-                                variant="link"
-                                onClick={() => {
-                                  setSelectedTrack(track);
-                                }}
-                                className={`font-sans 
-                       ${
-                         track === selectedTrack ? "font-bold" : "text-zinc-500"
-                       }`}
-                              >
-                                {track.Name}
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                        {/* {allTracks.length === 0 ? (
-                          msg0
-                        ) : (
+                      <div>
+                        <ScrollArea className="w-[400px] h-[100px] ">
                           <div>
                             {allTracks.map((track) => (
                               <div
@@ -269,17 +246,17 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
                               </div>
                             ))}
                           </div>
-                        )} */}
-                      </ScrollArea>
+                        </ScrollArea>
+                      </div>
                     </AlertDialogDescription>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => {
                           if (selectedTrack) {
-                            addTrackToPlaylist(selectedTrack, pl).then(() => {
-                              setTrigger(!trigger);
-                            });
+                            addTrackToPlaylist(selectedTrack, pl);
+                            setTrigger(!trigger);
+                            setPlaylist(pl);
                           }
                         }}
                       >

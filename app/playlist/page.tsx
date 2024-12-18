@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { invoke, Channel } from "@tauri-apps/api/core";
-import ScrollTrackList from "@/components/ui/tracklist";
+import ScrollTrackList from "@/components/tracklist";
 import { useTrack, Track } from "@/components/context/trackcontext";
 import {
   Card,

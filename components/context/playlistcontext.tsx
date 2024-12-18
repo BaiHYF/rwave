@@ -12,6 +12,8 @@ export interface PlaylistContextType {
   setPlaylist: React.Dispatch<React.SetStateAction<Playlist | null>>;
   playlists: Playlist[]; // All playlists
   setPlaylists: React.Dispatch<React.SetStateAction<Playlist[]>>;
+  tracklistExecOnce: boolean;
+  setTracklistExecOnce: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const PlaylistContext = createContext<PlaylistContextType | undefined>(
@@ -27,6 +29,7 @@ export const PlaylistProvider: React.FC<PlaylistProviderProps> = ({
 }) => {
   const [currentPlaylist, setCurrentPlaylist] = useState<Playlist | null>(null);
   const [allPlaylists, setAllPlaylists] = useState<Playlist[]>([]);
+  const [tracklistExecOnce, setTracklistExecOnce] = useState(true);
 
   return (
     <PlaylistContext.Provider
@@ -35,6 +38,8 @@ export const PlaylistProvider: React.FC<PlaylistProviderProps> = ({
         setPlaylist: setCurrentPlaylist,
         playlists: allPlaylists,
         setPlaylists: setAllPlaylists,
+        tracklistExecOnce,
+        setTracklistExecOnce,
       }}
     >
       {children}
