@@ -222,7 +222,7 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
                           : "Add track to '" + pl.name + "'"}
                       </AlertDialogTitle>
                     </AlertDialogHeader>
-                    <AlertDialogDescription>
+                    <AlertDialogDescription asChild>
                       <div>
                         <ScrollArea className="w-[400px] h-[100px] ">
                           <div>
@@ -287,6 +287,7 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
                         onClick={() => {
                           deletePlaylist(pl.playlist_id).then(() => {
                             setTrigger(!trigger);
+                            setPlaylist(playlists[0]);
                           });
                         }}
                       >
