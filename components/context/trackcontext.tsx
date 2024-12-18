@@ -25,7 +25,7 @@ export interface Artist {
 export interface TrackContextType {
   currentTrack: Track | null; // Currently playing track
   setCurrentTrack: React.Dispatch<React.SetStateAction<Track | null>>;
-  tracks: Track[]; // Tracks in current playlist
+  tracks: Track[]; /// Tracks in current playlist
   setTracks: React.Dispatch<React.SetStateAction<Track[]>>;
 }
 

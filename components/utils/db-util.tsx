@@ -56,3 +56,14 @@ export const deletePlaylist = async (id: number) => {
   await db.execute("DELETE FROM TrackPlaylist WHERE PlaylistID = $1", [id]);
   await db.execute("DELETE FROM Playlists WHERE PlaylistID = $1", [id]);
 };
+
+export const deleteTrackFromPlaylist = async (
+  trackID: number,
+  playlistID: number
+) => {
+  const db = await Database.load(dbURL);
+  await db.execute(
+    "DELETE FROM TrackPlaylist WHERE TrackID = $1 AND PlaylistID = $2",
+    [trackID, playlistID]
+  );
+};

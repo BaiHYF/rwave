@@ -12,16 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { usePlayerControls } from "@/components/hooks/usePlayerControls";
 import React, { useCallback, useState } from "react";
-import CreatePlaylistForm from "./create-playlist-form";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,15 +29,9 @@ import {
   fetchAllTracksFromPlaylist,
   addTrackToPlaylist,
   deletePlaylist,
+  deleteTrackFromPlaylist,
   createNewPlaylist,
 } from "@/components/utils/db-util";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { set } from "react-hook-form";
 import { z } from "zod";
@@ -79,6 +63,7 @@ const formSchema = z.object({
 const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
   const { playlist, setPlaylist, playlists, setPlaylists } = usePlaylist();
   const { handleLoadDir, handleLoadFile } = usePlayerControls();
+  const { tracks, setTracks } = useTrack();
 
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const [allTracks, setAllTracks] = useState<Track[]>([]);
@@ -136,6 +121,7 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
   return (
     <div className="space-y-2 mb-4 w-[450px] flex flex-col">
       <div className="flex flex-row justify-between">
+        {/* Button `Add track` at the top */}
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline">Add track</Button>
@@ -150,12 +136,13 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
           </PopoverContent>
         </Popover>
 
+        {/* Button `Create New Playlist` at the top */}
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline">Create New Playlist</Button>
           </PopoverTrigger>
           <PopoverContent>
-            {/* <CreatePlaylistForm /> */}
+            {/* Form `Create Playlist` <CreatePlaylistForm /> */}
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
@@ -192,114 +179,174 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
           </PopoverContent>
         </Popover>
       </div>
-
-      {playlists.map(
-        (pl) =>
-          pl.playlist_id !== 0 && (
-            <div
-              className="flex flex-row items-center justify-center"
-              key={pl.playlist_id}
-            >
-              <div className="flex space-x-2">
-                <Button
-                  variant="link"
-                  onClick={() => {
-                    setPlaylist(pl);
-                  }}
-                >
-                  {pl.name}
-                </Button>
-                {/* <Button variant="ghost">Add Track</Button> */}
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost">Add Track</Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        {allTracks.length === 0
-                          ? msg0
-                          : "Add track to '" + pl.name + "'"}
-                      </AlertDialogTitle>
-                    </AlertDialogHeader>
-                    <AlertDialogDescription asChild>
-                      <div>
-                        <ScrollArea className="w-[400px] h-[100px] ">
-                          <div>
-                            {allTracks.map((track) => (
-                              <div
-                                className="overflow-hidden"
-                                key={track.TrackID}
-                              >
-                                <Button
-                                  variant="link"
-                                  onClick={() => {
-                                    setSelectedTrack(track);
-                                  }}
-                                  className={`font-sans 
+      {/* Scroll Area to display all playlists */}
+      <ScrollArea className="h-[150px]">
+        {playlists.map(
+          (pl) =>
+            pl.playlist_id !== 1 && (
+              <div
+                className="flex flex-row items-center justify-center overflow-hidden"
+                key={pl.playlist_id}
+              >
+                <div className="flex space-x-2">
+                  <Button
+                    variant="link"
+                    onClick={() => {
+                      setPlaylist(pl);
+                    }}
+                  >
+                    {pl.name}
+                  </Button>
+                  {/* Button `Add Track` */}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost">Add Track</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          {allTracks.length === 0
+                            ? msg0
+                            : "Add track to '" + pl.name + "'"}
+                        </AlertDialogTitle>
+                      </AlertDialogHeader>
+                      <AlertDialogDescription asChild>
+                        <div>
+                          <ScrollArea className="w-[400px] h-[100px] ">
+                            <div>
+                              {allTracks.map((track) => (
+                                <div
+                                  className="overflow-hidden"
+                                  key={track.TrackID}
+                                >
+                                  <Button
+                                    variant="link"
+                                    onClick={() => {
+                                      setSelectedTrack(track);
+                                    }}
+                                    className={`font-sans 
                        ${
                          track === selectedTrack ? "font-bold" : "text-zinc-500"
                        }`}
-                                >
-                                  {track.Name}
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        </ScrollArea>
-                      </div>
-                    </AlertDialogDescription>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => {
-                          if (selectedTrack) {
-                            addTrackToPlaylist(selectedTrack, pl);
-                            setTrigger(!trigger);
-                            setPlaylist(pl);
-                          }
-                        }}
-                      >
-                        Continue
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-                <Button variant="ghost">Delete Track</Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost">Delete Playlist</Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Delete playlist {pl.name}, are you absolutely sure?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently
-                        delete the playlist and remove your data from rwave's
-                        database.
+                                  >
+                                    {track.Name}
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        </div>
                       </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => {
-                          deletePlaylist(pl.playlist_id).then(() => {
-                            setTrigger(!trigger);
-                            setPlaylist(playlists[0]);
-                          });
-                        }}
-                      >
-                        Continue
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            if (selectedTrack) {
+                              addTrackToPlaylist(selectedTrack, pl);
+                              setTrigger(!trigger);
+                              setPlaylist(pl);
+                            }
+                          }}
+                        >
+                          Continue
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  {/* Button `Delete Track` (from a playlist) */}
+                  {/* <Button variant="ghost">Delete Track</Button> */}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost">Delete Track</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          {allTracks.length === 0
+                            ? msg0
+                            : "Add track to '" + pl.name + "'"}
+                        </AlertDialogTitle>
+                      </AlertDialogHeader>
+                      <AlertDialogDescription asChild>
+                        <div>
+                          <ScrollArea className="w-[400px] h-[100px] ">
+                            <div>
+                              {/* Map tracks in the playlist */}
+                              {allTracks.map((track) => (
+                                <div
+                                  className="overflow-hidden"
+                                  key={track.TrackID}
+                                >
+                                  <Button
+                                    variant="link"
+                                    onClick={() => {
+                                      setSelectedTrack(track);
+                                    }}
+                                    className={`font-sans 
+                       ${
+                         track === selectedTrack ? "font-bold" : "text-zinc-500"
+                       }`}
+                                  >
+                                    {track.Name}
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        </div>
+                      </AlertDialogDescription>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            if (selectedTrack) {
+                              addTrackToPlaylist(selectedTrack, pl);
+                              setTrigger(!trigger);
+                              setPlaylist(pl);
+                            }
+                          }}
+                        >
+                          Continue
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  {/* Button `Delete Playlist` */}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost">Delete Playlist</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Delete playlist {pl.name}, are you absolutely sure?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently
+                          delete the playlist and remove your data from rwave's
+                          database.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            deletePlaylist(pl.playlist_id).then(() => {
+                              setTrigger(!trigger);
+                              setPlaylist(playlists[0]);
+                            });
+                          }}
+                        >
+                          Continue
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
-            </div>
-          )
-      )}
+            )
+        )}
+      </ScrollArea>
     </div>
   );
 };
