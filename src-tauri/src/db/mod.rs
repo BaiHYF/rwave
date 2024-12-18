@@ -6,6 +6,7 @@ use std::thread;
 
 mod constants;
 mod entities;
+pub mod migrations;
 pub mod playlistcommands;
 pub mod trackcommands;
 mod utils;
@@ -14,7 +15,7 @@ use constants::*;
 use entities::*;
 use utils::*;
 
-pub fn start() {
+pub fn db_start() {
     println!("Starting databse: {}", DB_URL);
 
     //Set database
@@ -165,6 +166,8 @@ fn handle_client(mut stream: TcpStream) {
 fn handle_post_request(request: &str) -> (String, String) {
     match (get_user_request_body(&request), Connection::open(DB_URL)) {
         (Ok(track), Ok(mut conn)) => {
+            println!("Received track");
+
             // Parse the MP3 tags
             let (title, artist, album, duration) =
                 parse_mp3_tags(&track.path).unwrap_or((None, None, None, None));

@@ -5,10 +5,7 @@ import { usePlaylist, Playlist } from "../context/playlistcontext";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { usePlayStateContext } from "../context/playstatecontext";
-import { fetchAllTracksFromPlaylist } from "../utils/db-util";
-
-export const db_url =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:7744";
+import { fetchAllTracksFromPlaylist, getDatabasePath } from "../utils/db-util";
 
 const ScrollTrackList = () => {
   const { currentTrack, setCurrentTrack, tracks, setTracks } = useTrack();
@@ -18,8 +15,10 @@ const ScrollTrackList = () => {
 
   useEffect(() => {
     const fetchAllPlaylist = async () => {
+      const dbURL = await getDatabasePath();
+      console.log("ScrollTrackList: Fetching all playlists from ", dbURL);
       try {
-        invoke("get_all_playlists").then((data) => {
+        invoke("get_all_playlists", { db_url: dbURL }).then((data) => {
           const playlistsData = data as Playlist[];
           console.log(playlistsData);
           setPlaylists(playlistsData);

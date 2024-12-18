@@ -166,9 +166,9 @@ pub fn rename_playlist(playlist_id: i32, new_name: String) -> Result<(), String>
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub fn get_all_playlists() -> Vec<Playlist> {
-    let conn = Connection::open(DB_URL).unwrap();
-
+pub fn get_all_playlists(db_url: String) -> Vec<Playlist> {
+    let conn = Connection::open(&db_url).unwrap();
+    
     let mut all_playlists = Vec::new();
 
     let mut stmt = conn.prepare("SELECT * FROM Playlists").unwrap();
@@ -187,4 +187,113 @@ pub fn get_all_playlists() -> Vec<Playlist> {
     }
 
     all_playlists
+}
+
+/// Receives a `.mp3` track path, parses the tags, and
+/// adds its album and artist (if not already in the database) to database.
+/// Then adds the track to the database, finally add the track to `All Tracks` playlist.
+#[tauri::command(rename_all = "snake_case")]
+pub fn add_track_command(track_path: String, db_url: String) -> String {
+    let mut conn = Connection::open(&db_url).unwrap();
+
+    // Parse the MP3 tags
+    let (title, artist, album, duration) =
+        crate::db::parse_mp3_tags(&track_path).unwrap_or((None, None, None, None));
+
+    let track_name = match title {
+        Some(t) => t,
+        None => "Unknown Title".to_string(),
+    };
+
+    // if `track_name` exists in database, don't insert it
+    let exist: Result<i32, _> = conn.query_row(
+        "SELECT TrackID FROM Tracks WHERE Name = ?",
+        params![&track_name],
+        |row| row.get(0),
+    );
+    if exist.is_ok() {
+        return "Track already exists".to_string();
+    }
+
+    let artist_name = match artist {
+        Some(a) => a,
+        None => "Unknown Artist".to_string(),
+    };
+    let album_name = match album {
+        Some(a) => a,
+        None => "Unknown Album".to_string(),
+    };
+
+    let track_duration = match duration {
+        Some(d) => d,
+        None => 0,
+    };
+
+    // Begin a transaction, for this series of operations
+    let tx = conn.transaction().unwrap();
+
+    // Search for the artist with name = `artist_name` in table `Artists`,
+    // Get the `artist_id` if it exists,
+    // Otherwise, insert a new artist item and return the new inserted item's `artist_id`
+    let artist_id = tx
+        .query_row(
+            "SELECT ArtistID FROM Artists WHERE Name = ?",
+            params![&artist_name],
+            |row| row.get(0),
+        )
+        .unwrap_or_else(|_| {
+            tx.execute(
+                "INSERT INTO Artists (Name) VALUES (?)",
+                params![&artist_name],
+            )
+            .unwrap();
+            tx.last_insert_rowid()
+        });
+
+    // Same solution for `album_id`
+    let album_id = tx
+        .query_row(
+            "SELECT AlbumID FROM Albums WHERE Name = ? AND ArtistID = ?",
+            params![&album_name, artist_id],
+            |row| row.get(0),
+        )
+        .unwrap_or_else(|_| {
+            tx.execute(
+                "INSERT INTO Albums (Name, ArtistID) VALUES (?, ?)",
+                params![&album_name, artist_id],
+            )
+            .unwrap();
+            tx.last_insert_rowid()
+        });
+
+    // Insert the track into the `Tracks` table
+    match tx.execute(
+        "INSERT INTO Tracks (Name, Path, ArtistID, AlbumID, Duration) VALUES (?1, ?2, ?3, ?4, ?5)",
+        params![
+            &track_name,
+            &track_path,
+            artist_id,
+            album_id,
+            track_duration
+        ],
+    ) {
+        Ok(_) => {
+            let track_id = tx.last_insert_rowid();
+
+            // Add the track to the playlist "All Tracks"
+            tx.execute(
+                "INSERT INTO TrackPlaylist (TrackID, PlaylistID) VALUES (?1, ?2)",
+                params![track_id, 1],
+            )
+            .unwrap();
+
+            tx.commit().unwrap();
+            return "Track created".to_string();
+        }
+        Err(e) => {
+            tx.rollback().unwrap();
+            println!("Database error: {}", e);
+            return "Invalid Operation".to_string();
+        }
+    }
 }

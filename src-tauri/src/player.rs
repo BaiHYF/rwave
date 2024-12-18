@@ -94,7 +94,9 @@ impl Player {
                     PlayerCommand::Seek(position) => {
                         // soundtrack.lock().unwrap().seek(position);
                         sink.try_seek(Duration::from_secs(position)).unwrap();
-                        event_sender.send(PlayerEvent::Seeked { position: position }).unwrap();
+                        event_sender
+                            .send(PlayerEvent::Seeked { position: position })
+                            .unwrap();
                     }
                     PlayerCommand::Terminate => {
                         break 'playback_receive_loop;
