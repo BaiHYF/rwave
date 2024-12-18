@@ -1,6 +1,6 @@
-use super::entities::Track;
-use super::{constants::*, Album, Artist, Playlist};
-use rusqlite::{params, Connection, Result};
+// use super::entities::Track;
+use super::{constants::*, Album, Artist};
+use rusqlite::{params, Connection};
 
 /// Get album by id
 #[tauri::command(rename_all = "snake_case")]

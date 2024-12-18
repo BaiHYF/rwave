@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { createNewPlaylist } from "@/components/utils/db-util";
 
 const formSchema = z.object({
   playlistName: z
@@ -42,6 +43,7 @@ export default function CreatePlaylistForm() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
+    createNewPlaylist(values.playlistName);
     setDisplay(true);
     console.log(values);
   }
@@ -56,10 +58,11 @@ export default function CreatePlaylistForm() {
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder="shadcn" {...field} />
+                <Input placeholder="Enter a cool name here" {...field} />
               </FormControl>
               <FormDescription>
-                Create a new playlist with a unique name.
+                Create a new playlist with a name, not necessarily unique but
+                recommended.
               </FormDescription>
               <div className={`${display ? "block" : "hidden"}`}>
                 <FormDescription className="text-green-500">

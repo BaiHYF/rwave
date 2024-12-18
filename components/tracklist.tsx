@@ -28,6 +28,10 @@ const ScrollTrackList = () => {
     };
 
     fetchAllPlaylist();
+
+    // if (playlist) {
+    //   setPlaylist(playlists[0]);
+    // }
   }, []);
 
   useEffect(() => {

@@ -22,8 +22,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useEffect } from "react";
-import { fetchAllTracksFromPlaylist } from "@/components/utils/db-util";
+import {
+  getDatabasePath,
+  fetchAllTracksFromPlaylist,
+  addTrackToPlaylist,
+  deletePlaylist,
+  createNewPlaylist,
+} from "@/components/utils/db-util";
 import {
   Select,
   SelectContent,
@@ -32,8 +49,32 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
+import { set } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
 type PlaylistPageBodyProps = {};
+
+const formSchema = z.object({
+  playlistName: z
+    .string()
+    .min(4, {
+      message: "Playlist name must be at least 4 characters.",
+    })
+    .max(30, {
+      message: "Playlist name must be at most 30 characters.",
+    }),
+});
 
 const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
   const { playlist, setPlaylist, playlists, setPlaylists } = usePlaylist();
@@ -42,15 +83,55 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const [allTracks, setAllTracks] = useState<Track[]>([]);
 
+  const [trigger, setTrigger] = useState(false);
+
+  const msg0: string = `no track available, please load some tracks to rwave first...`;
+
+  const [display, setDisplay] = useState(false);
+
+  // 1. Define your form.
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      playlistName: "",
+    },
+  });
+
+  // 2. Define a submit handler.
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    // Do something with the form values.
+    // ✅ This will be type-safe and validated.
+    createNewPlaylist(values.playlistName);
+    setDisplay(true);
+    setTrigger(!trigger);
+  }
+
+  const fetchAllPlaylist = async () => {
+    const dbURL = await getDatabasePath();
+    console.log("Playlistpage: Fetching all playlists from ", dbURL);
+    try {
+      invoke("get_all_playlists", { db_url: dbURL }).then((data) => {
+        const playlistsData = data as Playlist[];
+        console.log(playlistsData);
+        setPlaylists(playlistsData);
+      });
+    } catch (error) {
+      console.error("Error fetching data: ", error);
+    }
+  };
+
   useEffect(() => {
     const allTracksPl: Playlist = {
       playlist_id: 1,
       name: "All Tracks",
     };
+
+    fetchAllPlaylist();
+
     fetchAllTracksFromPlaylist(allTracksPl).then((atks) => {
       setAllTracks(atks);
     });
-  }, []);
+  }, [trigger]);
 
   return (
     <div className="space-y-2 mb-4 w-[450px] flex flex-col">
@@ -74,7 +155,40 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
             <Button variant="outline">Create New Playlist</Button>
           </PopoverTrigger>
           <PopoverContent>
-            <CreatePlaylistForm />
+            {/* <CreatePlaylistForm /> */}
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-8"
+              >
+                <FormField
+                  control={form.control}
+                  name="playlistName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter a cool name here"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Create a new playlist with a name, not necessarily
+                        unique but recommended.
+                      </FormDescription>
+                      <div className={`${display ? "block" : "hidden"}`}>
+                        <FormDescription className="text-green-500">
+                          Playlist created successfully 😄
+                        </FormDescription>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit">Submit</Button>
+              </form>
+            </Form>
           </PopoverContent>
         </Popover>
       </div>
@@ -87,68 +201,123 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
               key={pl.playlist_id}
             >
               <div className="flex space-x-2">
-                <Button variant="link">{pl.name}</Button>
+                <Button
+                  variant="link"
+                  onClick={() => {
+                    setPlaylist(pl);
+                  }}
+                >
+                  {pl.name}
+                </Button>
                 {/* <Button variant="ghost">Add Track</Button> */}
-                <Dialog>
-                  <DialogTrigger asChild>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
                     <Button variant="ghost">Add Track</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Add to {pl.name}</DialogTitle>
-                    </DialogHeader>
-                    <DialogDescription>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        {allTracks.length === 0
+                          ? msg0
+                          : "Add track to '" + pl.name + "'"}
+                      </AlertDialogTitle>
+                    </AlertDialogHeader>
+                    <AlertDialogDescription>
                       <ScrollArea className="w-[400px] h-[100px] ">
-                        {allTracks.length === 0 ? (
-                          <p>No tracks available.</p>
-                        ) : (
-                          <div>
-                            {allTracks.map((track) => (
-                              <figure key={track.TrackID}>
-                                <div className="overflow-hidden">
-                                  <Button
-                                    variant="link"
-                                    className={`font-sans 
+                        <div>
+                          {allTracks.map((track) => (
+                            <div
+                              className="overflow-hidden"
+                              key={track.TrackID}
+                            >
+                              <Button
+                                variant="link"
+                                onClick={() => {
+                                  setSelectedTrack(track);
+                                }}
+                                className={`font-sans 
                        ${
                          track === selectedTrack ? "font-bold" : "text-zinc-500"
                        }`}
-                                  >
-                                    {track.Name}
-                                  </Button>
-                                </div>
-                              </figure>
-                            ))}
-                          </div>
-                        )}
-                      </ScrollArea>
-
-                      {/* <Select>
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Select a track" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <ScrollArea>
-                            {allTracks.map((track) => (
-                              <SelectItem
-                                key={track.TrackID}
-                                value={track.Name}
                               >
                                 {track.Name}
-                              </SelectItem>
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                        {/* {allTracks.length === 0 ? (
+                          msg0
+                        ) : (
+                          <div>
+                            {allTracks.map((track) => (
+                              <div
+                                className="overflow-hidden"
+                                key={track.TrackID}
+                              >
+                                <Button
+                                  variant="link"
+                                  onClick={() => {
+                                    setSelectedTrack(track);
+                                  }}
+                                  className={`font-sans 
+                       ${
+                         track === selectedTrack ? "font-bold" : "text-zinc-500"
+                       }`}
+                                >
+                                  {track.Name}
+                                </Button>
+                              </div>
                             ))}
-                          </ScrollArea>
-                        </SelectContent>
-                      </Select> */}
-                    </DialogDescription>
-                    <DialogFooter>
-                      <Button variant="ghost" type="submit">
-                        submit
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                          </div>
+                        )} */}
+                      </ScrollArea>
+                    </AlertDialogDescription>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => {
+                          if (selectedTrack) {
+                            addTrackToPlaylist(selectedTrack, pl).then(() => {
+                              setTrigger(!trigger);
+                            });
+                          }
+                        }}
+                      >
+                        Continue
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
                 <Button variant="ghost">Delete Track</Button>
-                <Button variant="ghost">Delete Playlist</Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost">Delete Playlist</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Delete playlist {pl.name}, are you absolutely sure?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently
+                        delete the playlist and remove your data from rwave's
+                        database.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => {
+                          deletePlaylist(pl.playlist_id).then(() => {
+                            setTrigger(!trigger);
+                          });
+                        }}
+                      >
+                        Continue
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           )
