@@ -138,16 +138,7 @@ export default function Home() {
           <Separator orientation="vertical" />
 
           {/* PAGE BODY DYNAMIC */}
-          <PlaylistPageBody
-            currentTrack={currentTrack}
-            albumName={albumName}
-            artistName={artistName}
-            position={position}
-            duration={duration}
-            isSeeking={isSeeking}
-            setPosition={setPosition}
-            setIsSeeking={setIsSeeking}
-          />
+          <PlaylistPageBody />
         </CardContent>
         <CardFooter className="flex flex-col justify-center gap-x-0">
           {/* PAGE FOOTER FIXED */}

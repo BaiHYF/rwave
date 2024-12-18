@@ -4,9 +4,7 @@ import { useTrack } from "@/components/context/trackcontext";
 import { usePlayStateContext } from "@/components/context/playstatecontext";
 import { open } from "@tauri-apps/plugin-dialog";
 import { readDir, BaseDirectory } from "@tauri-apps/plugin-fs";
-import { db_url } from "@/components/ui/tracklist";
 import { Playlist, usePlaylist } from "@/components/context/playlistcontext";
-import axios from "axios";
 import { Track } from "@/components/context/trackcontext";
 import { fetchAllTracksFromPlaylist, getDatabasePath } from "../utils/db-util";
 export const usePlayerControls = () => {
