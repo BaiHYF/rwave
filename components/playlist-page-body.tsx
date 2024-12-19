@@ -63,16 +63,25 @@ const formSchema = z.object({
 const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
   const { playlist, setPlaylist, playlists, setPlaylists } = usePlaylist();
   const { handleLoadDir, handleLoadFile } = usePlayerControls();
-  const { tracks, setTracks } = useTrack();
+  // const { tracks, setTracks } = useTrack();
 
+  // selected track : 歌单中添加/删除歌曲用户鼠标选中的歌曲
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
+
+  // all tracks: 从数据库中获取所有歌曲,用于歌单在添加歌曲界面中渲染供用户选择
   const [allTracks, setAllTracks] = useState<Track[]>([]);
 
+  // trigger: add track 刷新歌单列表
   const [trigger, setTrigger] = useState(false);
 
+  // msg0: rwave数据库中没有歌曲时显示
   const msg0: string = `no track available, please load some tracks to rwave first...`;
 
+  // display: 设置是否显示创建歌单成功的信息
   const [display, setDisplay] = useState(false);
+
+  // TrkPlMap: 哈希表，key:number -- playlistID, value: Track[] -- 该歌单中所有歌曲
+  const [TrkPlMap, setTrkPlMap] = useState<Map<number, Track[]>>(new Map());
 
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
@@ -88,7 +97,7 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
     // ✅ This will be type-safe and validated.
     createNewPlaylist(values.playlistName);
     setDisplay(true);
-    setTrigger(!trigger);
+    setTrigger((t) => !t);
   }
 
   const fetchAllPlaylist = async () => {
@@ -112,10 +121,18 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
     };
 
     fetchAllPlaylist();
-
     fetchAllTracksFromPlaylist(allTracksPl).then((atks) => {
       setAllTracks(atks);
     });
+
+    let tmpMap = new Map();
+    playlists.forEach((pl) => {
+      fetchAllTracksFromPlaylist(pl).then((trks) => {
+        tmpMap.set(pl.playlist_id, trks);
+      });
+    });
+    setTrkPlMap(tmpMap);
+    // console.log("DEBUG: USEEFFECT -- TrkPlMap: ", TrkPlMap);
   }, [trigger]);
 
   return (
@@ -243,9 +260,9 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
                           onClick={() => {
                             if (selectedTrack) {
                               addTrackToPlaylist(selectedTrack, pl);
-                              setTrigger(!trigger);
-                              setPlaylist(pl);
                             }
+                            setPlaylist(pl);
+                            setTrigger((t) => !t);
                           }}
                         >
                           Continue
@@ -253,7 +270,7 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
-                  {/* Button `Delete Track` (from a playlist) */}
+                  {/* Dialog `Delete Track` (from a playlist) */}
                   {/* <Button variant="ghost">Delete Track</Button> */}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -262,36 +279,35 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
-                          {allTracks.length === 0
-                            ? msg0
-                            : "Add track to '" + pl.name + "'"}
+                          {/* 获取当前 playlist 内所有的 tracks, 在 AlertDialogDescription
+                          中的 ScrollArea 中为每个 track 创建一个 Button 
+                          
+                          也许我应该把 Add track 与 Delete track 坐在同一个界面？
+                          */}
+                          Remove track from '{pl.name}'
                         </AlertDialogTitle>
                       </AlertDialogHeader>
                       <AlertDialogDescription asChild>
                         <div>
-                          <ScrollArea className="w-[400px] h-[100px] ">
-                            <div>
-                              {/* Map tracks in the playlist */}
-                              {allTracks.map((track) => (
-                                <div
-                                  className="overflow-hidden"
-                                  key={track.TrackID}
-                                >
-                                  <Button
-                                    variant="link"
-                                    onClick={() => {
-                                      setSelectedTrack(track);
-                                    }}
-                                    className={`font-sans 
-                       ${
-                         track === selectedTrack ? "font-bold" : "text-zinc-500"
-                       }`}
-                                  >
-                                    {track.Name}
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
+                          <ScrollArea className="w-[400px] h-[100px] flex-col">
+                            {/* Unimplemented! */}
+                            {TrkPlMap.get(pl.playlist_id)?.map((track) => (
+                              <Button
+                                key={track.TrackID}
+                                variant="link"
+                                onClick={() => {
+                                  setSelectedTrack(track);
+                                }}
+                                className={`font-sans flex-col
+                                  ${
+                                    track === selectedTrack
+                                      ? "font-bold"
+                                      : "text-zinc-500"
+                                  }`}
+                              >
+                                {track.Name}
+                              </Button>
+                            ))}
                           </ScrollArea>
                         </div>
                       </AlertDialogDescription>
@@ -299,11 +315,17 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => {
+                            setPlaylist(pl);
                             if (selectedTrack) {
-                              addTrackToPlaylist(selectedTrack, pl);
-                              setTrigger(!trigger);
-                              setPlaylist(pl);
+                              deleteTrackFromPlaylist(
+                                selectedTrack.TrackID,
+                                pl.playlist_id
+                              );
                             }
+
+                            setTrigger((t) => !t);
+                            // setPlaylist(null);
+                            setPlaylist(pl);
                           }}
                         >
                           Continue
@@ -332,7 +354,7 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
                         <AlertDialogAction
                           onClick={() => {
                             deletePlaylist(pl.playlist_id).then(() => {
-                              setTrigger(!trigger);
+                              setTrigger((t) => !t);
                               setPlaylist(playlists[0]);
                             });
                           }}

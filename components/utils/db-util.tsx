@@ -43,7 +43,9 @@ export const addTrackToPlaylist = async (track: Track, playlist: Playlist) => {
     "INSERT OR IGNORE INTO TrackPlaylist (TrackID, PlaylistID) VALUES ($1, $2)",
     [track.TrackID, playlist.playlist_id]
   );
-  console.log("DEBUG: Added " + track.Name + " to playlist" + playlist.name);
+  console.log(
+    "DEBUG: Added '" + track.Name + "' to playlist '" + playlist.name + "'"
+  );
 };
 
 export const createNewPlaylist = async (name: string) => {

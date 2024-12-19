@@ -52,13 +52,17 @@ const ScrollTrackList = () => {
   }, [playlists]);
 
   useEffect(() => {
+    console.log("DEBUG: tracklist.tsx.57 playlist: ", playlist);
     if (playlist !== null) {
       const trks = fetchAllTracksFromPlaylist(playlist);
       trks.then((data) => {
         const tracksData = data as Track[];
         setTracks(tracksData);
         // console.log("Track data: ", tracksData);
-        // console.log("Tracks : ", tracks);
+        console.log(
+          "Tracklist.tsx: 61 -- number of tracks in scroll playlist -> ",
+          tracks.length
+        );
       });
     }
   }, [playlist]);
