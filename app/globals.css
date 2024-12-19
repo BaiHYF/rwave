@@ -3,8 +3,7 @@
 @tailwind utilities;
 
 body {
-  font-family: "HP Simplified", "Magneto" , Arial, Helvetica, sans-serif; 
-  /* font-family: "Consola";  */
+  font-family: "HP Simplified" , Arial, sans-serif; 
 }
 
 @layer base {
