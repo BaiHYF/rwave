@@ -47,6 +47,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { ListMusic } from "lucide-react";
+
 type PlaylistPageBodyProps = {
   TrackListRefreshTrigger: boolean;
   setTrackListRefreshTrigger: React.Dispatch<React.SetStateAction<boolean>>;
@@ -209,18 +216,30 @@ const PlaylistPageBody = ({
           (pl) =>
             pl.playlist_id !== 1 && (
               <div
-                className="flex flex-row items-center justify-center overflow-hidden"
+                className="flex flex-row items-center justify-between overflow-hidden"
                 key={pl.playlist_id}
               >
-                <div className="flex space-x-2">
-                  <Button
-                    variant="link"
-                    onClick={() => {
-                      setPlaylist(pl);
-                    }}
-                  >
-                    {pl.name}
-                  </Button>
+                <div className="flex space-x-1">
+                  <HoverCard>
+                    <HoverCardTrigger asChild>
+                      <Button
+                        className="flex-none w-[150px] justify-start overflow-hidden"
+                        variant="link"
+                        onClick={() => {
+                          setPlaylist(pl);
+                        }}
+                      >
+                        {/* <Marquee className="w-[150px]">{pl.name}</Marquee> */}
+                        {pl.name}
+                      </Button>
+                    </HoverCardTrigger>
+                    <HoverCardContent className="flex justify-start">
+                      <Button variant="link" className="justify-start">
+                        <ListMusic />
+                        {pl.name}
+                      </Button>
+                    </HoverCardContent>
+                  </HoverCard>
                   {/* Button `Add Track` */}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -248,7 +267,7 @@ const PlaylistPageBody = ({
                                     onClick={() => {
                                       setSelectedTrack(track);
                                     }}
-                                    className={`font-sans 
+                                    className={`font-sans
                        ${
                          track === selectedTrack ? "font-bold" : "text-zinc-500"
                        }`}
