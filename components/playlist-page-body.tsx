@@ -343,7 +343,7 @@ const PlaylistPageBody = ({
                           
                           也许我应该把 Add track 与 Delete track 坐在同一个界面？
                           */}
-                          Remove track from '{pl.name}'
+                          {`Remove track from '{pl.name}'`}
                         </AlertDialogTitle>
                       </AlertDialogHeader>
                       <AlertDialogDescription asChild>

@@ -14,7 +14,6 @@ interface ScrollTrackListProps {
 
 const ScrollTrackList: React.FC<ScrollTrackListProps> = ({
   TrackListRefreshTrigger,
-  setTrackListRefreshTrigger,
 }) => {
   const { currentTrack, setCurrentTrack, tracks, setTracks } = useTrack();
   const {
