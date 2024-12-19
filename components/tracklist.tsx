@@ -83,12 +83,12 @@ const ScrollTrackList: React.FC<ScrollTrackListProps> = ({
 
   return (
     <div>
-      <ScrollArea
-        className="w-[200px] h-[200px] "
-        // style={{ overflow: "hidden" }}
-      >
+      <ScrollArea className="w-[200px] h-[200px] ">
         {tracks.length === 0 ? (
-          <p>Empty playlist~ 😶‍🌫️.</p>
+          <div>
+            <p>Empty~ 😶‍🌫️.</p>
+            <p>You may load/add some tracks first...</p>
+          </div>
         ) : (
           <div>
             <span className="pt-2 font-semibold font-mono text-muted-foreground italic">

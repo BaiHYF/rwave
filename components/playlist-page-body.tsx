@@ -52,7 +52,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { ListMusic } from "lucide-react";
+import { ListMusic, Upload, ListPlus, ListX, Trash2 } from "lucide-react";
 
 type PlaylistPageBodyProps = {
   TrackListRefreshTrigger: boolean;
@@ -151,18 +151,21 @@ const PlaylistPageBody = ({
 
   return (
     <div className="space-y-2 mb-4 w-[450px] flex flex-col">
-      <div className="flex flex-row justify-between">
+      <div className="flex flex-row justify-start">
         {/* Button `Add track` at the top */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline">Add track</Button>
+            <Button variant="outline">
+              <Upload />
+              Load track
+            </Button>
           </PopoverTrigger>
           <PopoverContent>
             <Button variant="link" onClick={handleLoadFile}>
-              Select a single file
+              Load a file
             </Button>
             <Button variant="link" onClick={handleLoadDir}>
-              Select a directory
+              Load a directory
             </Button>
           </PopoverContent>
         </Popover>
@@ -170,7 +173,10 @@ const PlaylistPageBody = ({
         {/* Button `Create New Playlist` at the top */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline">Create New Playlist</Button>
+            <Button variant="outline">
+              <ListMusic />
+              Create New Playlist
+            </Button>
           </PopoverTrigger>
           <PopoverContent>
             {/* Form `Create Playlist` <CreatePlaylistForm /> */}
@@ -211,6 +217,16 @@ const PlaylistPageBody = ({
         </Popover>
       </div>
       {/* Scroll Area to display all playlists */}
+      <div className="text-zinc-500">
+        {playlists.length === 1
+          ? `create your first playlist by clicking the 'Create New Playlist' button above...`
+          : ``}
+      </div>
+      <div className="text-zinc-500">
+        {playlists.length === 1
+          ? `use the 'Load track' button above to add some local .mp3 files to the APP...`
+          : ``}
+      </div>
       <ScrollArea className="h-[150px]">
         {playlists.map(
           (pl) =>
@@ -223,7 +239,7 @@ const PlaylistPageBody = ({
                   <HoverCard>
                     <HoverCardTrigger asChild>
                       <Button
-                        className="flex-none w-[150px] justify-start overflow-hidden"
+                        className="flex-none w-[60px] justify-start overflow-hidden"
                         variant="link"
                         onClick={() => {
                           setPlaylist(pl);
@@ -243,7 +259,10 @@ const PlaylistPageBody = ({
                   {/* Button `Add Track` */}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost">Add Track</Button>
+                      <Button variant="ghost">
+                        <ListPlus />
+                        Add Track
+                      </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
@@ -301,7 +320,10 @@ const PlaylistPageBody = ({
                   {/* <Button variant="ghost">Delete Track</Button> */}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost">Delete Track</Button>
+                      <Button variant="ghost">
+                        <ListX />
+                        Delete Track
+                      </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
@@ -363,7 +385,10 @@ const PlaylistPageBody = ({
                   {/* Button `Delete Playlist` */}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost">Delete Playlist</Button>
+                      <Button variant="ghost">
+                        <Trash2 />
+                        Delete Playlist
+                      </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>

@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "rwave",
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.rwave.release", 
   "build": {
     "frontendDist": "../out",
     "devUrl": "http://localhost:3000",
@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "rwave",
-        "width": 752,
-        "height": 387,
+        "width": 759,
+        "height": 394,
         "resizable": false,
         "fullscreen": false
       }
@@ -27,11 +27,11 @@
     "active": true,
     "targets": "all",
     "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
+      "icons/rwaveicon32x32.png",
+      "icons/rwaveicon128x128.png",
+      "icons/rwaveicon128x128@2x.png",
+      "icons/rwaveicon.icns",
+      "icons/rwaveicon.ico"
     ]
   },
   "plugins": {
