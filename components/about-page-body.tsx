@@ -1,10 +1,4 @@
-import { ScanFace } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card } from "@/components/ui/card";
-const aboutInfoMsg: string =
-  "\
-about rave ...\
-";
 
 export default function AboutPageBody() {
   return (

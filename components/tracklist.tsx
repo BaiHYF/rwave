@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { invoke, Channel } from "@tauri-apps/api/core";
+import React, { useEffect, useCallback } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { useTrack, Track } from "@/components/context/trackcontext";
 import { usePlaylist, Playlist } from "./context/playlistcontext";
 import { Button } from "@/components/ui/button";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePlayStateContext } from "./context/playstatecontext";
 import { fetchAllTracksFromPlaylist, getDatabasePath } from "./utils/db-util";
 
@@ -25,26 +25,41 @@ const ScrollTrackList: React.FC<ScrollTrackListProps> = ({
     tracklistExecOnce,
     setTracklistExecOnce,
   } = usePlaylist();
-  const { playState, setPlayState } = usePlayStateContext();
+  const { setPlayState } = usePlayStateContext();
 
-  const fetchAllPlaylist = async () => {
+  // const fetchAllPlaylist = async () => {
+  //   const dbURL = await getDatabasePath();
+  //   try {
+  //     await invoke("get_all_playlists", { db_url: dbURL }).then((data) => {
+  //       const playlistsData = data as Playlist[];
+  //       setPlaylists(playlistsData);
+  //     });
+  //   } catch (error) {
+  //     console.error("Error fetching data: ", error);
+  //   }
+  // };
+
+  const fetchAllPlaylist = useCallback(async () => {
     const dbURL = await getDatabasePath();
     try {
-      await invoke("get_all_playlists", { db_url: dbURL }).then((data) => {
-        const playlistsData = data as Playlist[];
-        setPlaylists(playlistsData);
-      });
+      const data = await invoke("get_all_playlists", { db_url: dbURL });
+      const playlistsData = data as Playlist[];
+      setPlaylists(playlistsData);
     } catch (error) {
       console.error("Error fetching data: ", error);
     }
-  };
+  }, [setPlaylists]);
+
+  useEffect(() => {
+    fetchAllPlaylist();
+  }, [fetchAllPlaylist]);
 
   useEffect(() => {
     const initScrollTrackList = async () => {
       await fetchAllPlaylist(); // wait for playlists to be fetched
     };
     initScrollTrackList();
-  }, []);
+  }, [fetchAllPlaylist]);
 
   // make sure `setPlaylist(playlists[0])` below executes only once when the app is mounted
   // const [execOnce, setExecOnce] = useState(true);
@@ -54,7 +69,7 @@ const ScrollTrackList: React.FC<ScrollTrackListProps> = ({
       setPlaylist(playlists[0]);
       setTracklistExecOnce(false);
     }
-  }, [playlists]);
+  }, [playlists, setPlaylist, setTracklistExecOnce, tracklistExecOnce]);
 
   useEffect(() => {
     console.log("DEBUG: tracklist.tsx.57 playlist: ", playlist);
@@ -70,7 +85,7 @@ const ScrollTrackList: React.FC<ScrollTrackListProps> = ({
         );
       });
     }
-  }, [playlist, TrackListRefreshTrigger]);
+  }, [playlist, TrackListRefreshTrigger, setTracks, tracks.length]);
 
   const handleButtonClick = async (track: Track) => {
     setCurrentTrack(track);

@@ -10,7 +10,6 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { usePlayStateContext } from "@/components/context/playstatecontext";
 import Database from "@tauri-apps/plugin-sql";
 import { PlayerControls } from "@/components/player-control";
 import { usePlayerControls } from "@/components/hooks/usePlayerControls";
@@ -38,8 +37,7 @@ export default function Home() {
   // Define States
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
-  const { currentTrack, setCurrentTrack, tracks, setTracks } = useTrack();
-  const { playState, setPlayState } = usePlayStateContext();
+  const { currentTrack } = useTrack();
   const [albumName, setAlbumName] = useState("Unknown Album");
   const [artistName, setArtistName] = useState("Unknown Artist");
   const [isSeeking, setIsSeeking] = useState(false);
@@ -48,13 +46,8 @@ export default function Home() {
   // Constants and functions
   const dbUrl = "sqlite:rwave.db";
 
-  const {
-    handlePlay,
-    handlePause,
-    handleNext,
-    handleLast,
-    handleLoadDir: handleLoad,
-  } = usePlayerControls();
+  const { handlePlay, handlePause, handleNext, handleLast } =
+    usePlayerControls();
 
   const getTrackAlbum = async (track: Track) => {
     const db = await Database.load(dbUrl);

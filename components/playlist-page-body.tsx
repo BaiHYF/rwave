@@ -1,8 +1,5 @@
-import { invoke, Channel } from "@tauri-apps/api/core";
-import { useTrack, Track } from "@/components/context/trackcontext";
-import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Marquee } from "@/components/ui/marquee";
+import { invoke } from "@tauri-apps/api/core";
+import { Track } from "@/components/context/trackcontext";
 import { Playlist, usePlaylist } from "./context/playlistcontext";
 import {
   Popover,
@@ -11,7 +8,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { usePlayerControls } from "@/components/hooks/usePlayerControls";
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import {
   getDatabasePath,
   fetchAllTracksFromPlaylist,
@@ -33,7 +30,6 @@ import {
   createNewPlaylist,
 } from "@/components/utils/db-util";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { set } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -71,10 +67,9 @@ const formSchema = z.object({
 });
 
 const PlaylistPageBody = ({
-  TrackListRefreshTrigger,
   setTrackListRefreshTrigger,
 }: PlaylistPageBodyProps) => {
-  const { playlist, setPlaylist, playlists, setPlaylists } = usePlaylist();
+  const { setPlaylist, playlists, setPlaylists } = usePlaylist();
   const { handleLoadDir, handleLoadFile } = usePlayerControls();
   // const { tracks, setTracks } = useTrack();
 
@@ -114,19 +109,34 @@ const PlaylistPageBody = ({
     setTrackListRefreshTrigger((t) => !t);
   }
 
-  const fetchAllPlaylist = async () => {
+  // const fetchAllPlaylist = async () => {
+  //   const dbURL = await getDatabasePath();
+  //   // console.log("Playlistpage: Fetching all playlists from ", dbURL);
+  //   try {
+  //     invoke("get_all_playlists", { db_url: dbURL }).then((data) => {
+  //       const playlistsData = data as Playlist[];
+  //       // console.log(playlistsData);
+  //       setPlaylists(playlistsData);
+  //     });
+  //   } catch (error) {
+  //     console.error("Error fetching data: ", error);
+  //   }
+  // };
+
+  const fetchAllPlaylist = useCallback(async () => {
     const dbURL = await getDatabasePath();
-    // console.log("Playlistpage: Fetching all playlists from ", dbURL);
     try {
-      invoke("get_all_playlists", { db_url: dbURL }).then((data) => {
-        const playlistsData = data as Playlist[];
-        // console.log(playlistsData);
-        setPlaylists(playlistsData);
-      });
+      const data = await invoke("get_all_playlists", { db_url: dbURL });
+      const playlistsData = data as Playlist[];
+      setPlaylists(playlistsData);
     } catch (error) {
       console.error("Error fetching data: ", error);
     }
-  };
+  }, [setPlaylists]);
+
+  useEffect(() => {
+    fetchAllPlaylist();
+  }, [fetchAllPlaylist]);
 
   useEffect(() => {
     const allTracksPl: Playlist = {
@@ -139,7 +149,7 @@ const PlaylistPageBody = ({
       setAllTracks(atks);
     });
 
-    let tmpMap = new Map();
+    const tmpMap = new Map();
     playlists.forEach((pl) => {
       fetchAllTracksFromPlaylist(pl).then((trks) => {
         tmpMap.set(pl.playlist_id, trks);
@@ -147,7 +157,7 @@ const PlaylistPageBody = ({
     });
     setTrkPlMap(tmpMap);
     // console.log("DEBUG: USEEFFECT -- TrkPlMap: ", TrkPlMap);
-  }, [trigger]);
+  }, [trigger, fetchAllPlaylist, playlists]);
 
   return (
     <div className="space-y-2 mb-4 w-[450px] flex flex-col">
@@ -322,7 +332,7 @@ const PlaylistPageBody = ({
                     <AlertDialogTrigger asChild>
                       <Button variant="ghost">
                         <ListX />
-                        Delete Track
+                        {`Delete Track`}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -396,9 +406,9 @@ const PlaylistPageBody = ({
                           Delete playlist {pl.name}, are you absolutely sure?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently
+                          {`This action cannot be undone. This will permanently
                           delete the playlist and remove your data from rwave's
-                          database.
+                          database.`}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -422,23 +432,6 @@ const PlaylistPageBody = ({
             )
         )}
       </ScrollArea>
-    </div>
-  );
-};
-
-type PlaylistItemProps = {
-  playlist: Playlist;
-};
-
-const PlaylistItem = ({ playlist }: PlaylistItemProps) => {
-  return (
-    <div className="flex flex-row items-center justify-center">
-      <div className="flex space-x-2">
-        <Button variant="link">{playlist.name}</Button>
-        <Button variant="ghost">Add Track</Button>
-        <Button variant="ghost">Delete Track</Button>
-        <Button variant="ghost">Delete Playlist</Button>
-      </div>
     </div>
   );
 };

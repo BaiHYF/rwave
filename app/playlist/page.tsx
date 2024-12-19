@@ -1,5 +1,5 @@
 "use client";
-import { SetStateAction, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { invoke, Channel } from "@tauri-apps/api/core";
 import ScrollTrackList from "@/components/tracklist";
 import { useTrack, Track } from "@/components/context/trackcontext";
@@ -10,7 +10,6 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { usePlayStateContext } from "@/components/context/playstatecontext";
 import Database from "@tauri-apps/plugin-sql";
 import { PlayerControls } from "@/components/player-control";
 import { usePlayerControls } from "@/components/hooks/usePlayerControls";
@@ -36,24 +35,18 @@ type PlayerEvent =
 
 export default function Home() {
   // Define States
-  const [position, setPosition] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const { currentTrack, setCurrentTrack, tracks, setTracks } = useTrack();
-  const { playState, setPlayState } = usePlayStateContext();
-  const [albumName, setAlbumName] = useState("Unknown Album");
-  const [artistName, setArtistName] = useState("Unknown Artist");
-  const [isSeeking, setIsSeeking] = useState(false);
+  const [, setPosition] = useState(0);
+  const [, setDuration] = useState(0);
+  const { currentTrack } = useTrack();
+  const [, setAlbumName] = useState("Unknown Album");
+  const [, setArtistName] = useState("Unknown Artist");
+  const [isSeeking] = useState(false);
   const [TrackListRefreshTrigger, setTrackListRefreshTrigger] = useState(false);
   // Constants and functions
   const dbUrl = "sqlite:rwave.db";
 
-  const {
-    handlePlay,
-    handlePause,
-    handleNext,
-    handleLast,
-    handleLoadDir: handleLoad,
-  } = usePlayerControls();
+  const { handlePlay, handlePause, handleNext, handleLast } =
+    usePlayerControls();
 
   const getTrackAlbum = async (track: Track) => {
     const db = await Database.load(dbUrl);

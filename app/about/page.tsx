@@ -1,5 +1,5 @@
 "use client";
-import { SetStateAction, useEffect, useState } from "react";
+import { useState } from "react";
 import ScrollTrackList from "@/components/tracklist";
 import {
   Card,
@@ -12,18 +12,12 @@ import { PlayerControls } from "@/components/player-control";
 import { usePlayerControls } from "@/components/hooks/usePlayerControls";
 import PageHeader from "@/components/page-header";
 import AboutPageBody from "@/components/about-page-body";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
 export default function Home() {
   // Define States
   const [TrackListRefreshTrigger, setTrackListRefreshTrigger] = useState(false);
 
-  const {
-    handlePlay,
-    handlePause,
-    handleNext,
-    handleLast,
-    handleLoadDir: handleLoad,
-  } = usePlayerControls();
+  const { handlePlay, handlePause, handleNext, handleLast } =
+    usePlayerControls();
 
   return (
     <main>

@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Pause, Play, SkipBack, SkipForward } from "lucide-react";
 import { usePlayStateContext } from "@/components/context/playstatecontext";
 
 interface PlayerControlsProps {

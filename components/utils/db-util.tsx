@@ -2,17 +2,9 @@
 
 import Database from "@tauri-apps/plugin-sql";
 import { Playlist } from "../context/playlistcontext";
-import { Track, Album, Artist } from "../context/trackcontext";
-import { invoke, Channel } from "@tauri-apps/api/core";
+import { Track } from "../context/trackcontext";
 
 const dbURL = "sqlite:rwave.db";
-
-interface Tags {
-  title: string;
-  artist: string;
-  album: string;
-  duration: number;
-}
 
 interface DBinfo {
   seq: number;

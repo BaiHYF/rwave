@@ -14,8 +14,8 @@
       {
         "title": "rwave",
         "width": 759,
-        "height": 394,
-        "resizable": false,
+        "height": 395,
+        "resizable": true,
         "fullscreen": false
       }
     ],

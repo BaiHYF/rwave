@@ -4,23 +4,23 @@ import { useTrack } from "@/components/context/trackcontext";
 import { usePlayStateContext } from "@/components/context/playstatecontext";
 import { open } from "@tauri-apps/plugin-dialog";
 import { readDir, BaseDirectory } from "@tauri-apps/plugin-fs";
-import { Playlist, usePlaylist } from "@/components/context/playlistcontext";
+import { usePlaylist } from "@/components/context/playlistcontext";
 import { Track } from "@/components/context/trackcontext";
 import { fetchAllTracksFromPlaylist, getDatabasePath } from "../utils/db-util";
 export const usePlayerControls = () => {
   const { currentTrack, setCurrentTrack, tracks, setTracks } = useTrack();
-  const { playState, setPlayState } = usePlayStateContext();
-  const { playlist, setPlaylist, playlists, setPlaylists } = usePlaylist();
+  const { setPlayState } = usePlayStateContext();
+  const { playlist } = usePlaylist();
 
   const handlePlay = useCallback(async () => {
     await invoke("play_track");
     setPlayState(true);
-  }, []);
+  }, [setPlayState]);
 
   const handlePause = useCallback(async () => {
     await invoke("pause_track");
     setPlayState(false);
-  }, []);
+  }, [setPlayState]);
 
   const handleNext = useCallback(async () => {
     if (currentTrack) {
@@ -33,7 +33,7 @@ export const usePlayerControls = () => {
         setPlayState(true);
       }
     }
-  }, [currentTrack, tracks, setCurrentTrack, invoke]);
+  }, [currentTrack, tracks, setCurrentTrack, setPlayState]);
 
   const handleLast = useCallback(async () => {
     if (currentTrack) {
@@ -49,7 +49,7 @@ export const usePlayerControls = () => {
         setPlayState(true);
       }
     }
-  }, [currentTrack, tracks, setCurrentTrack, invoke]);
+  }, [currentTrack, tracks, setCurrentTrack, setPlayState]);
 
   const handleLoadDir = useCallback(async () => {
     const filepath = await open({
@@ -74,17 +74,6 @@ export const usePlayerControls = () => {
           }).then((response) => {
             console.log(response);
           });
-          // const trackname = entry.name.slice(0, -4);
-          // const requestBody = {
-          //   name: trackname,
-          //   path: trackpath,
-          // };
-          // try {
-          //   const response = await axios.post(`${db_url}/tracks`, requestBody);
-          //   console.log("Track added to database:", response.data);
-          // } catch (error) {
-          //   console.error("Error fetching data: ", error);
-          // }
         }
       }
       if (playlist !== null) {
@@ -97,7 +86,7 @@ export const usePlayerControls = () => {
         });
       }
     }
-  }, []);
+  }, [playlist, setTracks, tracks]);
 
   const handleLoadFile = useCallback(async () => {
     getDatabasePath();
@@ -124,18 +113,6 @@ export const usePlayerControls = () => {
         }).then((response) => {
           console.log(response);
         });
-        // const trackname = path.slice(path.lastIndexOf("/") + 1, -4);
-
-        // const requestBody = {
-        //   name: trackname,
-        //   path: path,
-        // };
-        // console.log(requestBody);
-        // try {
-        //   const response = await axios.post(`${db_url}/tracks`, requestBody);
-        //   console.log(response.data);
-        //   console.log("Track added to database.");
-        // } catch (error) {}
       }
       if (playlist !== null) {
         const trks = fetchAllTracksFromPlaylist(playlist);
@@ -147,7 +124,7 @@ export const usePlayerControls = () => {
         });
       }
     }
-  }, []);
+  }, [playlist, setTracks, tracks]);
 
   return {
     handlePlay,

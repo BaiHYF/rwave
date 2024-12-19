@@ -1,11 +1,10 @@
-import { invoke, Channel } from "@tauri-apps/api/core";
+import { invoke } from "@tauri-apps/api/core";
 import { Slider } from "@/components/ui/slider";
-import { useTrack, Track } from "@/components/context/trackcontext";
+import { Track } from "@/components/context/trackcontext";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Marquee } from "@/components/ui/marquee";
 import { formatSecond } from "@/components/utils/formatSecond";
-
 type TrackPageBodyProps = {
   currentTrack: Track | null;
   albumName: string;
@@ -23,7 +22,6 @@ const TrackPageBody = ({
   artistName,
   position,
   duration,
-  isSeeking,
   setPosition,
   setIsSeeking,
 }: TrackPageBodyProps) => {
