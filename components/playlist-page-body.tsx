@@ -47,7 +47,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
-type PlaylistPageBodyProps = {};
+type PlaylistPageBodyProps = {
+  TrackListRefreshTrigger: boolean;
+  setTrackListRefreshTrigger: React.Dispatch<React.SetStateAction<boolean>>;
+};
 
 const formSchema = z.object({
   playlistName: z
@@ -60,7 +63,10 @@ const formSchema = z.object({
     }),
 });
 
-const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
+const PlaylistPageBody = ({
+  TrackListRefreshTrigger,
+  setTrackListRefreshTrigger,
+}: PlaylistPageBodyProps) => {
   const { playlist, setPlaylist, playlists, setPlaylists } = usePlaylist();
   const { handleLoadDir, handleLoadFile } = usePlayerControls();
   // const { tracks, setTracks } = useTrack();
@@ -98,6 +104,7 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
     createNewPlaylist(values.playlistName);
     setDisplay(true);
     setTrigger((t) => !t);
+    setTrackListRefreshTrigger((t) => !t);
   }
 
   const fetchAllPlaylist = async () => {
@@ -263,6 +270,7 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
                             }
                             setPlaylist(pl);
                             setTrigger((t) => !t);
+                            setTrackListRefreshTrigger((t) => !t);
                           }}
                         >
                           Continue
@@ -289,25 +297,26 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
                       </AlertDialogHeader>
                       <AlertDialogDescription asChild>
                         <div>
-                          <ScrollArea className="w-[400px] h-[100px] flex-col">
-                            {/* Unimplemented! */}
-                            {TrkPlMap.get(pl.playlist_id)?.map((track) => (
-                              <Button
-                                key={track.TrackID}
-                                variant="link"
-                                onClick={() => {
-                                  setSelectedTrack(track);
-                                }}
-                                className={`font-sans flex-col
+                          <ScrollArea className="w-[400px] h-[100px]">
+                            <div className="flex flex-col">
+                              {TrkPlMap.get(pl.playlist_id)?.map((track) => (
+                                <Button
+                                  key={track.TrackID}
+                                  variant="link"
+                                  onClick={() => {
+                                    setSelectedTrack(track);
+                                  }}
+                                  className={`font-sans justify-between
                                   ${
                                     track === selectedTrack
                                       ? "font-bold"
                                       : "text-zinc-500"
                                   }`}
-                              >
-                                {track.Name}
-                              </Button>
-                            ))}
+                                >
+                                  {track.Name}
+                                </Button>
+                              ))}
+                            </div>
                           </ScrollArea>
                         </div>
                       </AlertDialogDescription>
@@ -322,9 +331,8 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
                                 pl.playlist_id
                               );
                             }
-
                             setTrigger((t) => !t);
-                            // setPlaylist(null);
+                            setTrackListRefreshTrigger((t) => !t);
                             setPlaylist(pl);
                           }}
                         >
@@ -355,6 +363,7 @@ const PlaylistPageBody = ({}: PlaylistPageBodyProps) => {
                           onClick={() => {
                             deletePlaylist(pl.playlist_id).then(() => {
                               setTrigger((t) => !t);
+                              setTrackListRefreshTrigger((t) => !t);
                               setPlaylist(playlists[0]);
                             });
                           }}

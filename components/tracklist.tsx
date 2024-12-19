@@ -7,7 +7,15 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { usePlayStateContext } from "./context/playstatecontext";
 import { fetchAllTracksFromPlaylist, getDatabasePath } from "./utils/db-util";
 
-const ScrollTrackList = () => {
+interface ScrollTrackListProps {
+  TrackListRefreshTrigger: boolean;
+  setTrackListRefreshTrigger: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const ScrollTrackList: React.FC<ScrollTrackListProps> = ({
+  TrackListRefreshTrigger,
+  setTrackListRefreshTrigger,
+}) => {
   const { currentTrack, setCurrentTrack, tracks, setTracks } = useTrack();
   const {
     playlist,
@@ -21,13 +29,10 @@ const ScrollTrackList = () => {
 
   const fetchAllPlaylist = async () => {
     const dbURL = await getDatabasePath();
-    // console.log("ScrollTrackList: Fetching all playlists from ", dbURL);
     try {
       await invoke("get_all_playlists", { db_url: dbURL }).then((data) => {
         const playlistsData = data as Playlist[];
         setPlaylists(playlistsData);
-        // console.log("DEBUG in fetchAllPlaylist PlaylistsData: ", playlistsData); // 这里输出 Array(2)
-        // console.log("DEBUG in fetchAllPlaylist Playlists: ", playlists); // 这里输出 Array(0)，没能成功赋值 playlists， 为什么?
       });
     } catch (error) {
       console.error("Error fetching data: ", error);
@@ -65,7 +70,7 @@ const ScrollTrackList = () => {
         );
       });
     }
-  }, [playlist]);
+  }, [playlist, TrackListRefreshTrigger]);
 
   const handleButtonClick = async (track: Track) => {
     setCurrentTrack(track);

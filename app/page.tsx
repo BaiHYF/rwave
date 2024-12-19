@@ -43,6 +43,7 @@ export default function Home() {
   const [albumName, setAlbumName] = useState("Unknown Album");
   const [artistName, setArtistName] = useState("Unknown Artist");
   const [isSeeking, setIsSeeking] = useState(false);
+  const [TrackListRefreshTrigger, setTrackListRefreshTrigger] = useState(false);
 
   // Constants and functions
   const dbUrl = "sqlite:rwave.db";
@@ -133,7 +134,11 @@ export default function Home() {
         <CardContent className="flex justify-start space-x-4 w-[300px]">
           {/* SCROLL TRACKLIST FIXED */}
           <div>
-            <ScrollTrackList />
+            <ScrollTrackList
+              TrackListRefreshTrigger={TrackListRefreshTrigger}
+              setTrackListRefreshTrigger={setTrackListRefreshTrigger}
+            />
+            s
           </div>
           <Separator orientation="vertical" />
 

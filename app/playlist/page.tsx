@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { SetStateAction, useEffect, useState } from "react";
 import { invoke, Channel } from "@tauri-apps/api/core";
 import ScrollTrackList from "@/components/tracklist";
 import { useTrack, Track } from "@/components/context/trackcontext";
@@ -43,7 +43,7 @@ export default function Home() {
   const [albumName, setAlbumName] = useState("Unknown Album");
   const [artistName, setArtistName] = useState("Unknown Artist");
   const [isSeeking, setIsSeeking] = useState(false);
-
+  const [TrackListRefreshTrigger, setTrackListRefreshTrigger] = useState(false);
   // Constants and functions
   const dbUrl = "sqlite:rwave.db";
 
@@ -133,12 +133,18 @@ export default function Home() {
         <CardContent className="flex justify-start space-x-4 w-[300px]">
           {/* SCROLL TRACKLIST FIXED */}
           <div>
-            <ScrollTrackList />
+            <ScrollTrackList
+              TrackListRefreshTrigger={TrackListRefreshTrigger}
+              setTrackListRefreshTrigger={setTrackListRefreshTrigger}
+            />
           </div>
           <Separator orientation="vertical" />
 
           {/* PAGE BODY DYNAMIC */}
-          <PlaylistPageBody />
+          <PlaylistPageBody
+            TrackListRefreshTrigger={TrackListRefreshTrigger}
+            setTrackListRefreshTrigger={setTrackListRefreshTrigger}
+          />
         </CardContent>
         <CardFooter className="flex flex-col justify-center gap-x-0">
           {/* PAGE FOOTER FIXED */}
